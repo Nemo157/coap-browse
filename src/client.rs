@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use vdom_rsjs::{VNode, VTag, VProperty};
 use tokio_core::reactor::Handle;
 
-use component::{ShouldRender, Component};
+use futures::{Sink, Stream, Future, future::{self, Either}};
+use futures::unsync::mpsc;
 
+type ShouldRender = bool;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Action {
@@ -12,19 +14,25 @@ pub enum Action {
     Decrement,
 }
 
-#[derive(Debug, Clone)]
-pub struct Root {
+#[derive(Debug)]
+struct State {
     count: usize,
 }
 
-impl Root {
-    pub fn new(_handle: Handle) -> Root {
-        Root { count: 0 }
+impl State {
+    fn with_channels(mut self, rx: mpsc::Receiver<Action>, tx: mpsc::Sender<VNode<Action>>) -> impl Future<Item = (), Error = ()> {
+        tx.send(self.render())
+            .map_err(|e| println!("state send error: {:?}", e))
+            .and_then(|tx| rx
+                .fold(tx, move |tx, action| {
+                    if self.update(action) {
+                        Either::A(tx.send(self.render()).map_err(|e| println!("state send error: {:?}", e)))
+                    } else {
+                        Either::B(future::ok(tx))
+                    }
+                })
+                .map(|_| ()))
     }
-}
-
-impl Component for Root {
-    type Action = Action;
 
     fn update(&mut self, action: Action) -> ShouldRender {
         match action {
@@ -80,3 +88,11 @@ impl Component for Root {
     }
 }
 
+pub fn new(handle: Handle) -> (impl Sink<SinkItem = Action, SinkError = ()>, impl Stream<Item = VNode<Action>, Error = ()>) {
+    let state = State { count: 0 };
+    let (incoming_tx, incoming_rx) = mpsc::channel(1);
+    let (outgoing_tx, outgoing_rx) = mpsc::channel(1);
+
+    handle.spawn(state.with_channels(incoming_rx, outgoing_tx));
+    (incoming_tx.sink_map_err(|e| println!("error sinking action: {:?}", e)), outgoing_rx)
+}

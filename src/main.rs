@@ -9,16 +9,14 @@ extern crate serde_derive;
 
 use tokio_core::reactor::Core;
 
-mod component;
-mod root;
+mod client;
 mod serve;
 
 fn main() {
     let mut core = Core::new().unwrap();
     let handle = core.handle();
 
-    let root = root::Root::new(handle.clone());
-    let server = serve::serve(handle, root);
+    let server = serve::serve(handle.clone(), move || client::new(handle.clone()));
 
     core.run(server).unwrap();
 }

@@ -1,67 +1,31 @@
 use std::fmt::Debug;
-use std::net::SocketAddr;
 
-use websocket::message::{Message, OwnedMessage};
+use websocket::message::OwnedMessage;
 use websocket::server::InvalidConnection;
 use websocket::async::Server;
 
 use tokio_core::reactor::Handle;
-use futures::{Future, Sink, Stream};
+use futures::{Future, Sink, Stream, stream};
 use vdom_rsjs::VNode;
 use serde_json;
 use serde::{Serialize, Deserialize};
-
-use component::Component;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct FullUpdate<A> {
     tree: VNode<A>,
 }
 
-fn handle_message<A, C>(addr: &SocketAddr, root: &mut C, msg: OwnedMessage) -> Option<OwnedMessage>
-where A: Serialize + for<'a> Deserialize<'a> + Debug, C: Component<Action = A> + Debug {
-    match msg {
-        OwnedMessage::Ping(msg) => Some(OwnedMessage::Pong(msg)),
-        OwnedMessage::Pong(_) => None,
-        OwnedMessage::Text(msg) => {
-            let action: A = match serde_json::from_str(&msg) {
-                Ok(action) => action,
-                Err(err) => {
-                    println!("{}: error deserializing {:?}", addr, err);
-                    return None;
-                }
-            };
-            println!("{}: new action: {:?}", addr, action);
-            println!("{}: new state: {:?}", addr, root);
-            if root.update(action) {
-                let tree = root.render();
-                println!("{}: new tree: {:?}", addr, tree);
-                let json = serde_json::to_string(&FullUpdate { tree }).unwrap();
-                Some(OwnedMessage::Text(json))
-            } else {
-                println!("{}: no change", addr);
-                None
-            }
-        }
-        OwnedMessage::Binary(_) => {
-            println!("{}: unexpected binary message", addr);
-            None
-        }
-        OwnedMessage::Close(_) => {
-            None
-        }
-    }
-}
-
-pub fn serve<A, C>(handle: Handle, root: C) -> impl Future<Item = (), Error = ()>
-where A: Serialize + for<'a> Deserialize<'a> + Debug, C: Component<Action = A> + Debug + Clone + 'static {
+pub fn serve<Action, ClientSink, ClientStream, NewClient>(handle: Handle, mut new_client: NewClient) -> impl Future<Item = (), Error = ()>
+where Action: Serialize + for<'a> Deserialize<'a> + Debug,
+      ClientSink: Sink<SinkItem = Action, SinkError = ()> + 'static,
+      ClientStream: Stream<Item = VNode<Action>, Error = ()> + 'static,
+      NewClient: FnMut() -> (ClientSink, ClientStream) + Clone + 'static,
+{
     let server = Server::bind("127.0.0.1:8080", &handle).unwrap();
 
     server.incoming()
         .map_err(|InvalidConnection { error, .. }| error)
         .for_each(move |(upgrade, addr)| {
-            let root = root.clone();
-
             println!("Got a connection from {}", addr);
 
             if !upgrade.protocols().iter().any(|s| s == "coap-browse") {
@@ -69,27 +33,51 @@ where A: Serialize + for<'a> Deserialize<'a> + Debug, C: Component<Action = A> +
                 return Ok(());
             }
 
+            let (client_sink, client_stream) = new_client();
             let f = upgrade
                 .use_protocol("coap-browse")
                 .accept()
-                .and_then(move |(s, _)| {
-                    let tree = root.render();
-                    println!("{}: initial state: {:?}", addr, root);
-                    println!("{}: initial tree: {:?}", addr, tree);
-
-                    let json = serde_json::to_string(&FullUpdate { tree }).unwrap();
-                    s.send(Message::text(json).into())
-                        .and_then(|s| Ok((s, root)))
-                })
-                .and_then(move |(s, mut root)| {
-                    let (sink, stream) = s.split();
-                    stream
+                .map_err(|e| println!("error accepting stream: {:?}", e))
+                .and_then(move |(ws, _)| {
+                    let (ws_sink, ws_stream) = ws.split();
+                    let incoming = ws_stream
                         .take_while(|m| Ok(!m.is_close()))
-                        .filter_map(move |m| handle_message(&addr, &mut root, m))
-                        .forward(sink)
-                        .and_then(|(_, sink)| {
-                            sink.send(OwnedMessage::Close(None))
+                        .filter_map(|m| match m {
+                            OwnedMessage::Ping(_) => {
+                                // TODO: Handle pings, going to need to
+                                // change these stream/sink pairs to have a
+                                // multiplexer in between them to allow
+                                // bypassing the client for sending the PONG
+                                // response.
+                                None
+                            }
+                            OwnedMessage::Pong(_) => None,
+                            OwnedMessage::Text(msg) => {
+                                match serde_json::from_str(&msg) {
+                                    Ok(action) => Some(action),
+                                    Err(err) => {
+                                        println!("error deserializing {:?}", err);
+                                        None
+                                    }
+                                }
+                            }
+                            OwnedMessage::Binary(_) => {
+                                println!("unexpected binary message");
+                                None
+                            }
+                            OwnedMessage::Close(_) => {
+                                None
+                            }
                         })
+                        .map_err(|e| println!("error handling ws_stream: {:?}", e))
+                        .forward(client_sink.sink_map_err(|e| println!("error handling client_sink: {:?}", e)));
+                    let outgoing = client_stream
+                        .map_err(|e| println!("error on client_stream: {:?}", e))
+                        .map(|tree| serde_json::to_string(&FullUpdate { tree }).unwrap())
+                        .map(|json| OwnedMessage::Text(json))
+                        .chain(stream::once(Ok(OwnedMessage::Close(None))))
+                        .forward(ws_sink.sink_map_err(|e| println!("error on ws_sink: {:?}", e)));
+                    incoming.join(outgoing)
                 });
 
             spawn_future(f, "Client Status", &handle);
