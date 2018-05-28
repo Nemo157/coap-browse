@@ -5,12 +5,24 @@ import VPatch from 'virtual-dom/vnode/vpatch'
 
 import * as bridge from 'vdom-rsjs'
 
+function omap(o, f) {
+  let n = {}
+  for (let [k, v] of Object.entries(o)) {
+    n[k] = f(v)
+  }
+  return n
+}
+
 function start() {
   let tree, rootNode
   let socket = new WebSocket("ws://localhost:8080", ["coap-browse"])
 
-  let onaction = action => {
-    socket.send(JSON.stringify(action))
+  let onaction = (event, action) => {
+    socket.send(JSON.stringify({
+      tag: action.tag,
+      data: action.data,
+      associated: omap(action.associated, v => event.target[v]),
+    }))
   }
 
   socket.onclose = () => {

@@ -9,9 +9,16 @@ use futures::unsync::mpsc;
 type ShouldRender = bool;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Action {
+pub enum ActionTag {
     Increment,
     Decrement,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Action {
+    tag: ActionTag,
+    data: (),
+    associated: HashMap<String, String>,
 }
 
 #[derive(Debug)]
@@ -35,9 +42,9 @@ impl State {
     }
 
     fn update(&mut self, action: Action) -> ShouldRender {
-        match action {
-            Action::Increment => self.count += 1,
-            Action::Decrement => self.count -= 1,
+        match action.tag {
+            ActionTag::Increment => self.count += 1,
+            ActionTag::Decrement => self.count -= 1,
         }
         true
     }
@@ -59,7 +66,11 @@ impl State {
                     name: "button".into(),
                     properties: {
                         let mut props = HashMap::new();
-                        props.insert("onclick".into(), VProperty::Action(Action::Increment));
+                        props.insert("onclick".into(), VProperty::Action(Action {
+                            tag: ActionTag::Increment,
+                            data: (),
+                            associated: HashMap::new(),
+                        }));
                         props
                     },
                     children: vec![
@@ -72,7 +83,11 @@ impl State {
                     name: "button".into(),
                     properties: {
                         let mut props = HashMap::new();
-                        props.insert("onclick".into(), VProperty::Action(Action::Decrement));
+                        props.insert("onclick".into(), VProperty::Action(Action {
+                            tag: ActionTag::Decrement,
+                            data: (),
+                            associated: HashMap::new(),
+                        }));
                         props
                     },
                     children: vec![
