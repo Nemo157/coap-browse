@@ -1,3 +1,5 @@
+#![feature(never_type)]
+
 extern crate websocket;
 extern crate futures;
 extern crate tokio_core;
@@ -12,6 +14,7 @@ use tokio_core::reactor::Core;
 
 mod client;
 mod serve;
+mod log;
 
 fn main() {
     let mut core = Core::new().unwrap();

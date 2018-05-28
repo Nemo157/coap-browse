@@ -9,6 +9,8 @@ use tokio_coap::error::Error as CoapError;
 use futures::{Sink, Stream, Future, future::{self, Either}};
 use futures::unsync::mpsc;
 
+use log::SessionLog;
+
 type ShouldRender = bool;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -36,7 +38,7 @@ enum Event {
 struct State {
     handle: Handle,
     events: mpsc::Sender<Event>,
-    session_log: Vec<String>,
+    session_log: Vec<SessionLog>,
 }
 
 impl State {
@@ -67,7 +69,7 @@ impl State {
             Event::Ui(Action { tag: ActionTag::SubmitUrl, associated, .. }) => {
                 let url = associated.get("value").unwrap().clone();
                 let events = self.events.clone();
-                self.session_log.push(format!("Request to {}", url));
+                self.session_log.push(SessionLog::Request { url: url.clone() });
                 self.handle.spawn(
                     Client::get(&url)
                         .send()
@@ -79,7 +81,7 @@ impl State {
                         .map_err(|e| println!("error sending response in: {:?}", e)))
             }
             Event::Response { request, response } => {
-                self.session_log.push(format!("Response to {}: {:?}", request, response));
+                self.session_log.push(SessionLog::Response { request, response });
             }
         }
         true
@@ -118,7 +120,7 @@ impl State {
                         VNode::Tag(VTag {
                             name: "li".into(),
                             properties: HashMap::new(),
-                            children: vec![VNode::Text(log.clone())],
+                            children: vec![log.render().map_action(&|a| a)],
                             key: None,
                             namespace: None,
                         })

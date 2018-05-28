@@ -12,7 +12,8 @@ tokio-core = "0.1.17"
 websocket = "0.20.2"
 
 [dependencies.tokio-coap]
-git = "https://github.com/azdle/tokio-coap"
+git = "https://github.com/Nemo157/tokio-coap"
+branch = "parse-url"
 optional = false
 
 [dependencies.vdom-rsjs]
