@@ -1,7 +1,8 @@
 # `coap-browse`
 
-A UI for making requests to [CoAP][] servers. Intended to be a non-browser
-extension based alternative to [Copper][]. Still very much a prototype.
+A UI for making requests to [CoAP][] servers. Intended to be a
+non-browser-extension based alternative to [Copper][]. Still very much a
+prototype.
 
 ## Running
 
