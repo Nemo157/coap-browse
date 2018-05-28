@@ -10,9 +10,7 @@ type ShouldRender = bool;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionTag {
-    Increment,
-    Decrement,
-    SubmitMsg,
+    SubmitUrl,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,15 +28,14 @@ enum Event {
 #[derive(Debug)]
 struct State {
     handle: Handle,
-    count: usize,
-    msg: String,
+    session_log: Vec<String>,
 }
 
 impl State {
     fn spawn(handle: Handle) -> (impl Sink<SinkItem = Event, SinkError = ()>, impl Stream<Item = VNode<Action>, Error = ()>) {
         let (events_tx, events_rx) = mpsc::channel(1);
         let (render_tx, render_rx) = mpsc::channel(1);
-        let mut state = State { handle: handle.clone(), count: 0, msg: "".into() };
+        let mut state = State { handle: handle.clone(), session_log: vec![] };
         handle.spawn(render_tx.send(state.render())
             .map_err(|e| println!("state send error: {:?}", e))
             .and_then(|tx| events_rx
@@ -55,12 +52,10 @@ impl State {
 
     fn update(&mut self, event: Event) -> ShouldRender {
         match event {
-            Event::Ui(Action { tag: ActionTag::Increment, .. })
-                => self.count += 1,
-            Event::Ui(Action { tag: ActionTag::Decrement, .. })
-                => self.count -= 1,
-            Event::Ui(Action { tag: ActionTag::SubmitMsg, associated, .. })
-                => self.msg = associated.get("value").unwrap().clone(),
+            Event::Ui(Action { tag: ActionTag::SubmitUrl, associated, .. }) => {
+                let url = associated.get("value").unwrap().clone();
+                self.session_log.push(format!("Request to {}", url));
+            }
         }
         true
     }
@@ -70,55 +65,14 @@ impl State {
             name: "div".into(),
             properties: HashMap::new(),
             children: vec![
-                VNode::Text(self.count.to_string()),
-                VNode::Tag(VTag {
-                    name: "br".into(),
-                    properties: HashMap::new(),
-                    children: vec![],
-                    key: None,
-                    namespace: None,
-                }),
-                VNode::Tag(VTag {
-                    name: "button".into(),
-                    properties: {
-                        let mut props = HashMap::new();
-                        props.insert("onclick".into(), VProperty::Action(Action {
-                            tag: ActionTag::Increment,
-                            data: (),
-                            associated: HashMap::new(),
-                        }));
-                        props
-                    },
-                    children: vec![
-                        VNode::Text("increment".into()),
-                    ],
-                    key: None,
-                    namespace: None,
-                }),
-                VNode::Tag(VTag {
-                    name: "button".into(),
-                    properties: {
-                        let mut props = HashMap::new();
-                        props.insert("onclick".into(), VProperty::Action(Action {
-                            tag: ActionTag::Decrement,
-                            data: (),
-                            associated: HashMap::new(),
-                        }));
-                        props
-                    },
-                    children: vec![
-                        VNode::Text("decrement".into()),
-                    ],
-                    key: None,
-                    namespace: None,
-                }),
                 VNode::Tag(VTag {
                     name: "input".into(),
                     properties: {
                         let mut props = HashMap::new();
                         props.insert("type".into(), VProperty::Text("text".into()));
+                        props.insert("placeholder".into(), VProperty::Text("coap url".into()));
                         props.insert("onchange".into(), VProperty::Action(Action {
-                            tag: ActionTag::SubmitMsg,
+                            tag: ActionTag::SubmitUrl,
                             data: (),
                             associated: {
                                 let mut associated = HashMap::new();
@@ -132,7 +86,21 @@ impl State {
                     key: None,
                     namespace: None,
                 }),
-                VNode::Text(self.msg.clone()),
+                VNode::Tag(VTag {
+                    name: "ol".into(),
+                    properties: HashMap::new(),
+                    children: self.session_log.iter().map(|log| {
+                        VNode::Tag(VTag {
+                            name: "li".into(),
+                            properties: HashMap::new(),
+                            children: vec![VNode::Text(log.clone())],
+                            key: None,
+                            namespace: None,
+                        })
+                    }).collect(),
+                    key: None,
+                    namespace: None,
+                }),
             ],
             key: None,
             namespace: None,
