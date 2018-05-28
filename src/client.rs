@@ -69,7 +69,7 @@ impl State {
             Event::Ui(Action { tag: ActionTag::SubmitUrl, associated, .. }) => {
                 let url = associated.get("value").unwrap().clone();
                 let events = self.events.clone();
-                self.session_log.push(SessionLog::Request { url: url.clone() });
+                self.session_log.insert(0, SessionLog::Request { url: url.clone() });
                 self.handle.spawn(
                     Client::get(&url)
                         .send()
@@ -81,7 +81,10 @@ impl State {
                         .map_err(|e| println!("error sending response in: {:?}", e)))
             }
             Event::Response { request, response } => {
-                self.session_log.push(SessionLog::Response { request, response });
+                self.session_log.insert(0, SessionLog::Response {
+                    request,
+                    response,
+                });
             }
         }
         true

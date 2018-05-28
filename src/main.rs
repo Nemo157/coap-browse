@@ -1,10 +1,12 @@
 #![feature(never_type)]
+#![feature(slice_patterns)]
 
 extern crate websocket;
 extern crate futures;
 extern crate tokio_core;
 extern crate vdom_rsjs;
 extern crate serde_json;
+extern crate serde_cbor;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
