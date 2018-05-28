@@ -11,6 +11,10 @@ serde_json = "1.0.18"
 tokio-core = "0.1.17"
 websocket = "0.20.2"
 
+[dependencies.tokio-coap]
+git = "https://github.com/azdle/tokio-coap"
+optional = false
+
 [dependencies.vdom-rsjs]
 git = "https://github.com/Nemo157/vdom-rsjs"
 optional = false
