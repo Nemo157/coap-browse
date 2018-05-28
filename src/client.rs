@@ -12,6 +12,7 @@ type ShouldRender = bool;
 pub enum ActionTag {
     Increment,
     Decrement,
+    SubmitMsg,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -24,6 +25,7 @@ pub struct Action {
 #[derive(Debug)]
 struct State {
     count: usize,
+    msg: String,
 }
 
 impl State {
@@ -42,9 +44,11 @@ impl State {
     }
 
     fn update(&mut self, action: Action) -> ShouldRender {
+        println!("action: {:?}", action);
         match action.tag {
             ActionTag::Increment => self.count += 1,
             ActionTag::Decrement => self.count -= 1,
+            ActionTag::SubmitMsg => self.msg = action.associated.get("value").unwrap().clone(),
         }
         true
     }
@@ -96,6 +100,27 @@ impl State {
                     key: None,
                     namespace: None,
                 }),
+                VNode::Tag(VTag {
+                    name: "input".into(),
+                    properties: {
+                        let mut props = HashMap::new();
+                        props.insert("type".into(), VProperty::Text("text".into()));
+                        props.insert("onchange".into(), VProperty::Action(Action {
+                            tag: ActionTag::SubmitMsg,
+                            data: (),
+                            associated: {
+                                let mut associated = HashMap::new();
+                                associated.insert("value".into(), "value".into());
+                                associated
+                            },
+                        }));
+                        props
+                    },
+                    children: vec![],
+                    key: None,
+                    namespace: None,
+                }),
+                VNode::Text(self.msg.clone()),
             ],
             key: None,
             namespace: None,
@@ -104,7 +129,7 @@ impl State {
 }
 
 pub fn new(handle: Handle) -> (impl Sink<SinkItem = Action, SinkError = ()>, impl Stream<Item = VNode<Action>, Error = ()>) {
-    let state = State { count: 0 };
+    let state = State { count: 0, msg: "".into() };
     let (incoming_tx, incoming_rx) = mpsc::channel(1);
     let (outgoing_tx, outgoing_rx) = mpsc::channel(1);
 
