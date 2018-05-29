@@ -82,8 +82,8 @@ impl State {
                 let events = self.events.clone();
                 self.session_log.insert(0, SessionLog::Request { url: url.clone() });
                 self.handle.spawn(
-                    Client::get(&url)
-                        .send()
+                    future::result(Client::get(&url))
+                        .and_then(|client| client.send())
                         .then(|response| events.send(Event::Response {
                             request: url,
                             response,

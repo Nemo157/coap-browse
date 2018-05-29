@@ -620,7 +620,7 @@ dependencies = [
 [[package]]
 name = "tokio-coap"
 version = "0.2.0"
-source = "git+https://github.com/Nemo157/tokio-coap#9c697d6853b0089ea2e25e751c80ebb9711be1a5"
+source = "git+https://github.com/Nemo157/tokio-coap#1975aa17db651a60e6c38f20087d01c0f6b7e66b"
 dependencies = [
  "bytes 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)",
