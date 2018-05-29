@@ -20,7 +20,12 @@ pub enum SessionLog {
 }
 
 fn render_request(url: &str) -> VNode<!> {
-    format!("Request to {}", url).into()
+    VTag::new("div")
+        .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
+        .child(VTag::new("div")
+            .prop("style", "color:#586e75;border-bottom:1px solid #93a1a1")
+            .child(format!("Request to {}", url)))
+        .into()
 }
 
 fn render_raw_payload(payload: &[u8]) -> VNode<!> {
@@ -81,7 +86,10 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
     };
 
     VTag::new("div")
-        .child(format!("Response for {}", url))
+        .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
+        .child(VTag::new("div")
+            .prop("style", "color:#859900;border-bottom:1px solid #93a1a1")
+            .child(format!("Response for {}", url)))
         .child({
             match (&fmt, fmt_name) {
                 (_, Some(fmt)) => format!("content format: {}", fmt),
@@ -97,8 +105,11 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
 
 fn render_bad_response(url: &str, err: &CoapError) -> VNode<!> {
     VTag::new("div")
-        .child(format!("Error requesting {}", url))
-        .child(format!("{:?}", err))
+        .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
+        .child(VTag::new("div")
+            .prop("style", "color:#dc322f;border-bottom:1px solid #93a1a1")
+            .child(format!("Error requesting {}", url)))
+        .child(VTag::new("pre").child(format!("{:#?}", err)))
         .into()
 }
 

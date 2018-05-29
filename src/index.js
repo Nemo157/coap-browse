@@ -27,6 +27,7 @@ function start() {
 
   socket.onclose = () => {
     document.body.innerHTML = "socket closed"
+    setTimeout(() => (document.body.innerHTML = "", start()), 2000)
   }
 
   socket.onerror = err => {

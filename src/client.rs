@@ -103,15 +103,19 @@ impl State {
 
     fn render(&self) -> VNode<Action> {
         VTag::new("div")
-            .child(VTag::new("input")
-                .prop("type", "text")
-                .prop("placeholder", "coap url")
-                .prop("onchange", VProperty::Action(
-                        Action::new(ActionTag::SubmitUrl)
-                            .associate("value", "value"))))
-            .child(VTag::new("ol")
+            .prop("style", "display:flex;flex-direction:column;width:auto;height:auto;margin:10px 20px;border:1px solid #586e75;border-radius:3px")
+            .child(VTag::new("div")
+                .prop("style", "display:flex;flex-direction:row;background-color:#eee8d5;border-bottom:1px solid #586e75")
+                .child(VTag::new("input")
+                    .prop("type", "text")
+                    .prop("placeholder", "coap url")
+                    .prop("onchange", VProperty::Action(
+                            Action::new(ActionTag::SubmitUrl)
+                                .associate("value", "value")))))
+            .child(VTag::new("div")
+                .prop("style", "display:flex;flex-direction:column;list-style:none")
                 .children(self.session_log.iter().map(|log|
-                    VTag::new("li").child(log.render().map_action(&|a| a)))))
+                        log.render().map_action(&|a| a))))
             .into()
     }
 }
