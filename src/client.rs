@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use vdom_rsjs::{VNode, VTag, VProperty};
@@ -21,8 +22,18 @@ pub enum ActionTag {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Action {
     tag: ActionTag,
-    data: (),
     associated: HashMap<String, String>,
+}
+
+impl Action {
+    pub fn new(tag: ActionTag) -> Action {
+        Action { tag, associated: HashMap::new() }
+    }
+
+    fn associate(mut self, name: impl Into<Cow<'static, str>>, prop: impl Into<Cow<'static, str>>) -> Action {
+        self.associated.insert(name.into().into_owned(), prop.into().into_owned());
+        self
+    }
 }
 
 #[derive(Debug)]
@@ -95,15 +106,9 @@ impl State {
             .child(VTag::new("input")
                 .prop("type", "text")
                 .prop("placeholder", "coap url")
-                .prop("onchange", VProperty::Action(Action {
-                    tag: ActionTag::SubmitUrl,
-                    data: (),
-                    associated: {
-                        let mut associated = HashMap::new();
-                        associated.insert("value".into(), "value".into());
-                        associated
-                    },
-                })))
+                .prop("onchange", VProperty::Action(
+                        Action::new(ActionTag::SubmitUrl)
+                            .associate("value", "value"))))
             .child(VTag::new("ol")
                 .children(self.session_log.iter().map(|log|
                     VTag::new("li").child(log.render().map_action(&|a| a)))))
