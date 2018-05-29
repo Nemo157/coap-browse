@@ -91,50 +91,23 @@ impl State {
     }
 
     fn render(&self) -> VNode<Action> {
-        VNode::Tag(VTag {
-            name: "div".into(),
-            properties: HashMap::new(),
-            children: vec![
-                VNode::Tag(VTag {
-                    name: "input".into(),
-                    properties: {
-                        let mut props = HashMap::new();
-                        props.insert("type".into(), VProperty::Text("text".into()));
-                        props.insert("placeholder".into(), VProperty::Text("coap url".into()));
-                        props.insert("onchange".into(), VProperty::Action(Action {
-                            tag: ActionTag::SubmitUrl,
-                            data: (),
-                            associated: {
-                                let mut associated = HashMap::new();
-                                associated.insert("value".into(), "value".into());
-                                associated
-                            },
-                        }));
-                        props
+        VTag::new("div")
+            .child(VTag::new("input")
+                .prop("type", "text")
+                .prop("placeholder", "coap url")
+                .prop("onchange", VProperty::Action(Action {
+                    tag: ActionTag::SubmitUrl,
+                    data: (),
+                    associated: {
+                        let mut associated = HashMap::new();
+                        associated.insert("value".into(), "value".into());
+                        associated
                     },
-                    children: vec![],
-                    key: None,
-                    namespace: None,
-                }),
-                VNode::Tag(VTag {
-                    name: "ol".into(),
-                    properties: HashMap::new(),
-                    children: self.session_log.iter().map(|log| {
-                        VNode::Tag(VTag {
-                            name: "li".into(),
-                            properties: HashMap::new(),
-                            children: vec![log.render().map_action(&|a| a)],
-                            key: None,
-                            namespace: None,
-                        })
-                    }).collect(),
-                    key: None,
-                    namespace: None,
-                }),
-            ],
-            key: None,
-            namespace: None,
-        })
+                })))
+            .child(VTag::new("ol")
+                .children(self.session_log.iter().map(|log|
+                    VTag::new("li").child(log.render().map_action(&|a| a)))))
+            .into()
     }
 }
 

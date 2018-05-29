@@ -830,7 +830,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "vdom-rsjs"
 version = "0.1.0"
-source = "git+https://github.com/Nemo157/vdom-rsjs#6c5b0f8969afe21ebad653316ccd041d352259ea"
+source = "git+https://github.com/Nemo157/vdom-rsjs#164fb868e4a631bc60eb51da7ae528a1706e4bde"
 dependencies = [
  "serde 1.0.62 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.62 (registry+https://github.com/rust-lang/crates.io-index)",

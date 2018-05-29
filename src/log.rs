@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use vdom_rsjs::{VNode, VTag};
 
 use tokio_coap::message::Message as CoapMessage;
@@ -22,53 +20,35 @@ pub enum SessionLog {
 }
 
 fn render_request(url: &str) -> VNode<!> {
-    VNode::Text(format!("Request to {}", url))
+    format!("Request to {}", url).into()
 }
 
 fn render_raw_payload(payload: &[u8]) -> VNode<!> {
-    VNode::Tag(VTag {
-        name: "pre".to_owned(),
-        properties: HashMap::new(),
-        children: vec![
-            VNode::Text(format!("{:#?}", payload)),
-        ],
-        key: None,
-        namespace: None,
-    })
+    VTag::new("pre")
+        .child(format!("{:#?}", payload))
+        .into()
 }
 
 fn render_json_payload(payload: &[u8]) -> VNode<!> {
-    VNode::Tag(VTag {
-        name: "pre".to_owned(),
-        properties: HashMap::new(),
-        children: vec![
-            VNode::Text(serde_json::from_slice::<serde_json::Value>(payload).and_then(|p| serde_json::to_string_pretty(&p)).unwrap_or_else(|e| format!("{:?}", e))),
-        ],
-        key: None,
-        namespace: None,
-    })
+    VTag::new("pre")
+        .child(serde_json::from_slice::<serde_json::Value>(payload)
+            .and_then(|p| serde_json::to_string_pretty(&p))
+            .unwrap_or_else(|e| format!("{:?}", e)))
+        .into()
 }
 
 fn render_cbor_payload(payload: &[u8]) -> VNode<!> {
-    VNode::Tag(VTag {
-        name: "pre".to_owned(),
-        properties: HashMap::new(),
-        children: vec![
-            VNode::Text(format!("{:#?}", serde_cbor::from_slice::<serde_cbor::Value>(payload))),
-        ],
-        key: None,
-        namespace: None,
-    })
+    VTag::new("pre")
+        .child(format!("{:#?}", serde_cbor::from_slice::<serde_cbor::Value>(payload)))
+        .into()
 }
 
 fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<!> {
-    VNode::Tag(VTag {
-        name: "div".to_owned(),
-        properties: HashMap::new(),
-        children: vec![
-            VNode::Text("Payload: ".to_owned()),
+    VTag::new("div")
+        .child("Payload: ")
+        .child({
             if fmt == Some(ContentFormat::new(0)) {
-                VNode::Text(String::from_utf8_lossy(payload).into_owned())
+                String::from_utf8_lossy(payload).into_owned().into()
             } else if fmt == Some(ContentFormat::new(50)) {
                 render_json_payload(payload)
             } else if fmt == Some(ContentFormat::new(60)) {
@@ -76,10 +56,8 @@ fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<!> {
             } else {
                 render_raw_payload(payload)
             }
-        ],
-        key: None,
-        namespace: None,
-    })
+        })
+        .into()
 }
 
 fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
@@ -102,44 +80,26 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
         None
     };
 
-    VNode::Tag(VTag {
-        name: "div".to_owned(),
-        properties: HashMap::new(),
-        children: vec![
-            VNode::Text(format!("Response for {}", url)),
+    VTag::new("div")
+        .child(format!("Response for {}", url))
+        .child({
             match (&fmt, fmt_name) {
-                (_, Some(fmt)) => VNode::Text(format!("content format: {}", fmt)),
-                (Some(fmt), _) => VNode::Text(format!("content format: {:?}", fmt)),
-                (None, _) => VNode::Text("unspecified content format".to_owned()),
-            },
-            render_payload(fmt, &msg.payload),
-            VNode::Text("raw:".to_owned()),
-            VNode::Tag(VTag {
-                name: "pre".to_owned(),
-                properties: HashMap::new(),
-                children: vec![
-                    VNode::Text(format!("{:#?}", msg)),
-                ],
-                key: None,
-                namespace: None,
-            })
-        ],
-        key: None,
-        namespace: None,
-    })
+                (_, Some(fmt)) => format!("content format: {}", fmt),
+                (Some(fmt), _) => format!("content format: {:?}", fmt),
+                (None, _) => "unspecified content format".to_owned(),
+            }
+        })
+        .child(render_payload(fmt, &msg.payload))
+        .child("raw:")
+        .child(VTag::new("pre").child(format!("{:#?}", msg)))
+        .into()
 }
 
 fn render_bad_response(url: &str, err: &CoapError) -> VNode<!> {
-    VNode::Tag(VTag {
-        name: "div".to_owned(),
-        properties: HashMap::new(),
-        children: vec![
-            VNode::Text(format!("Error requesting {}", url)),
-            VNode::Text(format!("{:?}", err)),
-        ],
-        key: None,
-        namespace: None,
-    })
+    VTag::new("div")
+        .child(format!("Error requesting {}", url))
+        .child(format!("{:?}", err))
+        .into()
 }
 
 fn render_response(url: &str, response: &Result<CoapMessage, CoapError>) -> VNode<!> {
