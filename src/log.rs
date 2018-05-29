@@ -1,3 +1,5 @@
+use std::str;
+
 use vdom_rsjs::{VNode, VTag};
 
 use tokio_coap::message::Message as CoapMessage;
@@ -7,6 +9,7 @@ use tokio_coap::message::option::Option as O;
 
 use serde_json;
 use serde_cbor;
+use serde_xml;
 
 #[derive(Debug)]
 pub enum SessionLog {
@@ -23,7 +26,7 @@ fn render_request(url: &str) -> VNode<!> {
     VTag::new("div")
         .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
         .child(VTag::new("div")
-            .prop("style", "color:#586e75;border-bottom:1px solid #93a1a1")
+            .prop("style", "color:#586e75;padding:5px")
             .child(format!("Request to {}", url)))
         .into()
 }
@@ -48,12 +51,39 @@ fn render_cbor_payload(payload: &[u8]) -> VNode<!> {
         .into()
 }
 
+fn render_xml_payload(payload: &[u8]) -> VNode<!> {
+    VTag::new("pre")
+        .child(str::from_utf8(payload)
+            .map_err(|e| Box::<::std::error::Error>::from(e))
+            .and_then(|p| serde_xml::from_str::<serde_xml::value::Element>(p)
+                .map_err(|e| Box::<::std::error::Error>::from(e)))
+            .map(|p| format!("{:#?}", p))
+            .unwrap_or_else(|e| format!("{:#?}", e)))
+        .into()
+}
+
+fn render_link_format_payload(payload: &[u8]) -> VNode<!> {
+    VTag::new("pre")
+        .child(String::from_utf8_lossy(payload).into_owned())
+        .into()
+}
+
+fn render_plain_text_payload(payload: &[u8]) -> VNode<!> {
+    VTag::new("blockquote")
+        .child(String::from_utf8_lossy(payload).into_owned())
+        .into()
+}
+
 fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<!> {
     VTag::new("div")
         .child("Payload: ")
         .child({
             if fmt == Some(ContentFormat::new(0)) {
-                String::from_utf8_lossy(payload).into_owned().into()
+                render_plain_text_payload(payload)
+            } else if fmt == Some(ContentFormat::new(40)) {
+                render_link_format_payload(payload)
+            } else if fmt == Some(ContentFormat::new(41)) {
+                render_xml_payload(payload)
             } else if fmt == Some(ContentFormat::new(50)) {
                 render_json_payload(payload)
             } else if fmt == Some(ContentFormat::new(60)) {
@@ -77,6 +107,10 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
 
     let fmt_name = if fmt == Some(ContentFormat::new(0)) {
         Some("text/plain; charset=utf-8")
+    } else if fmt == Some(ContentFormat::new(40)) {
+        Some("application/link-format")
+    } else if fmt == Some(ContentFormat::new(41)) {
+        Some("application/xml")
     } else if fmt == Some(ContentFormat::new(50)) {
         Some("application/json")
     } else if fmt == Some(ContentFormat::new(60)) {
@@ -88,18 +122,24 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
     VTag::new("div")
         .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
         .child(VTag::new("div")
-            .prop("style", "color:#859900;border-bottom:1px solid #93a1a1")
+            .prop("style", "color:#859900;border-bottom:1px solid #93a1a1;padding:5px")
             .child(format!("Response for {}", url)))
-        .child({
-            match (&fmt, fmt_name) {
-                (_, Some(fmt)) => format!("content format: {}", fmt),
-                (Some(fmt), _) => format!("content format: {:?}", fmt),
-                (None, _) => "unspecified content format".to_owned(),
-            }
-        })
-        .child(render_payload(fmt, &msg.payload))
-        .child("raw:")
-        .child(VTag::new("pre").child(format!("{:#?}", msg)))
+        .child(VTag::new("div")
+            .prop("style", "border-bottom:1px solid #93a1a1;padding:5px")
+            .child({
+                match (&fmt, fmt_name) {
+                    (_, Some(fmt)) => format!("content format: {}", fmt),
+                    (Some(fmt), _) => format!("content format: {:?}", fmt),
+                    (None, _) => "unspecified content format".to_owned(),
+                }
+            })
+            .child(render_payload(fmt, &msg.payload)))
+        .child(VTag::new("details")
+            .prop("style", "color:#93a1a1;padding:5px")
+            .child(VTag::new("summary").child("Raw message"))
+            .child(VTag::new("pre")
+                .prop("style", "margin-left:10px")
+                .child(format!("{:#?}", msg))))
         .into()
 }
 
@@ -107,7 +147,7 @@ fn render_bad_response(url: &str, err: &CoapError) -> VNode<!> {
     VTag::new("div")
         .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
         .child(VTag::new("div")
-            .prop("style", "color:#dc322f;border-bottom:1px solid #93a1a1")
+            .prop("style", "color:#dc322f;border-bottom:1px solid #93a1a1;padding:5px")
             .child(format!("Error requesting {}", url)))
         .child(VTag::new("pre").child(format!("{:#?}", err)))
         .into()

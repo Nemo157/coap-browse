@@ -7,6 +7,7 @@ extern crate tokio_core;
 extern crate vdom_rsjs;
 extern crate serde_json;
 extern crate serde_cbor;
+extern crate serde_xml;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
