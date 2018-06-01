@@ -12,6 +12,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate tokio_coap;
+extern crate im;
 
 use tokio_core::reactor::Core;
 

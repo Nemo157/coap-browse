@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::fmt::Debug;
 
 use websocket::message::OwnedMessage;
@@ -12,13 +13,13 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct FullUpdate<A> {
-    tree: VNode<A>,
+    tree: Arc<VNode<A>>,
 }
 
 pub fn serve<Action, ClientSink, ClientStream, NewClient>(handle: Handle, mut new_client: NewClient) -> impl Future<Item = (), Error = ()>
 where Action: Serialize + for<'a> Deserialize<'a> + Debug,
       ClientSink: Sink<SinkItem = Action, SinkError = ()> + 'static,
-      ClientStream: Stream<Item = VNode<Action>, Error = ()> + 'static,
+      ClientStream: Stream<Item = Arc<VNode<Action>>, Error = ()> + 'static,
       NewClient: FnMut() -> (ClientSink, ClientStream) + Clone + 'static,
 {
     let server = Server::bind("127.0.0.1:8080", &handle).unwrap();

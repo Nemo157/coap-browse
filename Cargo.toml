@@ -5,13 +5,17 @@ version = "0.1.0"
 
 [dependencies]
 futures = "0.1"
-serde = "1.0.62"
+im = "10.2.0"
 serde_cbor = "0.8.2"
 serde_derive = "1.0.62"
 serde_json = "1.0.18"
 serde_xml = "0.9.1"
 tokio-core = "0.1.17"
 websocket = "0.20.2"
+
+[dependencies.serde]
+features = ["rc"]
+version = "1.0.62"
 
 [dependencies.tokio-coap]
 git = "https://github.com/Nemo157/tokio-coap"

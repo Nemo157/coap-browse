@@ -1,18 +1,19 @@
 use std::borrow::Cow;
+use std::sync::Arc;
 use std::collections::HashMap;
 
 use vdom_rsjs::{VNode, VTag, VProperty};
+use vdom_rsjs::render::{Render, Cache, TopCache};
 use tokio_core::reactor::Handle;
 use tokio_coap::Client;
 use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::error::Error as CoapError;
+use im::ConsList;
 
 use futures::{Sink, Stream, Future, future::{self, Either}};
 use futures::unsync::mpsc;
 
 use log::SessionLog;
-
-type ShouldRender = bool;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionTag {
@@ -49,24 +50,27 @@ enum Event {
 struct State {
     handle: Handle,
     events: mpsc::Sender<Event>,
-    session_log: Vec<SessionLog>,
+    session_log: ConsList<SessionLog>,
 }
 
 impl State {
-    fn spawn(handle: Handle) -> (impl Sink<SinkItem = Event, SinkError = ()>, impl Stream<Item = VNode<Action>, Error = ()>) {
+    fn spawn(handle: Handle) -> (impl Sink<SinkItem = Event, SinkError = ()>, impl Stream<Item = Arc<VNode<Action>>, Error = ()>) {
         let (events_tx, events_rx) = mpsc::channel(1);
         let (render_tx, render_rx) = mpsc::channel(1);
-        let mut state = State {
+        let mut cache = TopCache::new();
+        let mut state = Arc::new(State {
             handle: handle.clone(),
             events: events_tx.clone(),
-            session_log: vec![],
-        };
-        handle.spawn(render_tx.send(state.render())
+            session_log: ConsList::new(),
+        });
+        handle.spawn(render_tx.send(cache.render(state.clone()))
             .map_err(|e| println!("state send error: {:?}", e))
             .and_then(|tx| events_rx
                 .fold(tx, move |tx, action| {
-                    if state.update(action) {
-                        Either::A(tx.send(state.render()).map_err(|e| println!("state send error: {:?}", e)))
+                    let new_state = state.update(action);
+                    if !Arc::ptr_eq(&state, &new_state) {
+                        state = new_state;
+                        Either::A(tx.send(cache.render(state.clone())).map_err(|e| println!("state send error: {:?}", e)))
                     } else {
                         Either::B(future::ok(tx))
                     }
@@ -75,33 +79,45 @@ impl State {
         (events_tx.sink_map_err(|e| println!("error sinking event: {:?}", e)), render_rx)
     }
 
-    fn update(&mut self, event: Event) -> ShouldRender {
+    fn update(&self, event: Event) -> Arc<State> {
         match event {
             Event::Ui(Action { tag: ActionTag::SubmitUrl, associated, .. }) => {
                 let url = associated.get("value").unwrap().clone();
                 let events = self.events.clone();
-                self.session_log.insert(0, SessionLog::Request { url: url.clone() });
-                self.handle.spawn(
-                    future::result(Client::get(&url))
-                        .and_then(|client| client.send())
-                        .then(|response| events.send(Event::Response {
-                            request: url,
-                            response,
-                        }))
-                        .map(|_| ())
-                        .map_err(|e| println!("error sending response in: {:?}", e)))
+                {
+                    let url = url.clone();
+                    self.handle.spawn(
+                        future::result(Client::get(&url))
+                            .and_then(|client| client.send())
+                            .then(|response| events.send(Event::Response {
+                                request: url,
+                                response,
+                            }))
+                            .map(|_| ())
+                            .map_err(|e| println!("error sending response in: {:?}", e)));
+                }
+                Arc::new(State {
+                    session_log: self.session_log.cons(SessionLog::Request { url }),
+                    handle: self.handle.clone(),
+                    events: self.events.clone(),
+                })
             }
             Event::Response { request, response } => {
-                self.session_log.insert(0, SessionLog::Response {
-                    request,
-                    response,
-                });
+                Arc::new(State {
+                    session_log: self.session_log.cons(SessionLog::Response {
+                        request,
+                        response,
+                    }),
+                    handle: self.handle.clone(),
+                    events: self.events.clone(),
+                })
             }
         }
-        true
     }
+}
 
-    fn render(&self) -> VNode<Action> {
+impl Render<Action> for State {
+    fn render(&self, cache: &mut Cache<Action>) -> VNode<Action> {
         VTag::new("div")
             .prop("style", "display:flex;flex-direction:column;width:auto;height:auto;margin:10px 20px;border:1px solid #586e75;border-radius:3px")
             .child(VTag::new("div")
@@ -114,13 +130,12 @@ impl State {
                                 .associate("value", "value")))))
             .child(VTag::new("div")
                 .prop("style", "display:flex;flex-direction:column;list-style:none")
-                .children(self.session_log.iter().map(|log|
-                        log.render().map_action(&|a| a))))
+                .children(self.session_log.iter().map(|log| cache.render(log))))
             .into()
     }
 }
 
-pub fn new(handle: Handle) -> (impl Sink<SinkItem = Action, SinkError = ()>, impl Stream<Item = VNode<Action>, Error = ()>) {
+pub fn new(handle: Handle) -> (impl Sink<SinkItem = Action, SinkError = ()>, impl Stream<Item = Arc<VNode<Action>>, Error = ()>) {
     let (events, renders) = State::spawn(handle.clone());
     let (ui, actions) = mpsc::channel(1);
 

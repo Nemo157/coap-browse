@@ -1,6 +1,8 @@
 use std::str;
 
+use client::Action;
 use vdom_rsjs::{VNode, VTag};
+use vdom_rsjs::render::{Render, Cache};
 
 use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::error::Error as CoapError;
@@ -22,7 +24,7 @@ pub enum SessionLog {
     },
 }
 
-fn render_request(url: &str) -> VNode<!> {
+fn render_request(url: &str) -> VNode<Action> {
     VTag::new("div")
         .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
         .child(VTag::new("div")
@@ -31,13 +33,13 @@ fn render_request(url: &str) -> VNode<!> {
         .into()
 }
 
-fn render_raw_payload(payload: &[u8]) -> VNode<!> {
+fn render_raw_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("pre")
         .child(format!("{:#?}", payload))
         .into()
 }
 
-fn render_json_payload(payload: &[u8]) -> VNode<!> {
+fn render_json_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("pre")
         .child(serde_json::from_slice::<serde_json::Value>(payload)
             .and_then(|p| serde_json::to_string_pretty(&p))
@@ -45,13 +47,13 @@ fn render_json_payload(payload: &[u8]) -> VNode<!> {
         .into()
 }
 
-fn render_cbor_payload(payload: &[u8]) -> VNode<!> {
+fn render_cbor_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("pre")
         .child(format!("{:#?}", serde_cbor::from_slice::<serde_cbor::Value>(payload)))
         .into()
 }
 
-fn render_xml_payload(payload: &[u8]) -> VNode<!> {
+fn render_xml_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("pre")
         .child(str::from_utf8(payload)
             .map_err(|e| Box::<::std::error::Error>::from(e))
@@ -62,19 +64,19 @@ fn render_xml_payload(payload: &[u8]) -> VNode<!> {
         .into()
 }
 
-fn render_link_format_payload(payload: &[u8]) -> VNode<!> {
+fn render_link_format_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("pre")
         .child(String::from_utf8_lossy(payload).into_owned())
         .into()
 }
 
-fn render_plain_text_payload(payload: &[u8]) -> VNode<!> {
+fn render_plain_text_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("blockquote")
         .child(String::from_utf8_lossy(payload).into_owned())
         .into()
 }
 
-fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<!> {
+fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<Action> {
     VTag::new("div")
         .child("Payload: ")
         .child({
@@ -95,7 +97,7 @@ fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<!> {
         .into()
 }
 
-fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
+fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<Action> {
     let fmt = match msg.options.get::<ContentFormat>() {
         Some(ref fmt) if fmt.len() == 1 => Some(fmt[0]),
         Some(_) => {
@@ -143,7 +145,7 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<!> {
         .into()
 }
 
-fn render_bad_response(url: &str, err: &CoapError) -> VNode<!> {
+fn render_bad_response(url: &str, err: &CoapError) -> VNode<Action> {
     VTag::new("div")
         .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
         .child(VTag::new("div")
@@ -153,15 +155,15 @@ fn render_bad_response(url: &str, err: &CoapError) -> VNode<!> {
         .into()
 }
 
-fn render_response(url: &str, response: &Result<CoapMessage, CoapError>) -> VNode<!> {
+fn render_response(url: &str, response: &Result<CoapMessage, CoapError>) -> VNode<Action> {
     match response {
         Ok(msg) => render_good_response(url, msg),
         Err(err) => render_bad_response(url, err),
     }
 }
 
-impl SessionLog {
-    pub fn render(&self) -> VNode<!> {
+impl Render<Action> for SessionLog {
+    fn render(&self, cache: &mut Cache<Action>) -> VNode<Action> {
         match self {
             SessionLog::Request { url }
                 => render_request(url),
