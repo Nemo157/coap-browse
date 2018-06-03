@@ -24,3 +24,7 @@ optional = false
 [dependencies.vdom-rsjs]
 git = "https://github.com/Nemo157/vdom-rsjs"
 optional = false
+
+[dependencies.serde_cbor-diag]
+git = "https://github.com/Nemo157/serde_cbor-diag-rs"
+optional = false

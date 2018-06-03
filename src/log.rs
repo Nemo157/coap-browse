@@ -11,6 +11,7 @@ use tokio_coap::message::option::Option as O;
 
 use serde_json;
 use serde_cbor;
+use serde_cbor_diag;
 use serde_xml;
 
 #[derive(Debug)]
@@ -49,7 +50,11 @@ fn render_json_payload(payload: &[u8]) -> VNode<Action> {
 
 fn render_cbor_payload(payload: &[u8]) -> VNode<Action> {
     VTag::new("pre")
-        .child(format!("{:#?}", serde_cbor::from_slice::<serde_cbor::Value>(payload)))
+        .child(serde_cbor::from_slice::<serde_cbor::Value>(payload)
+            .map_err(|e| format!("{:?}", e))
+            .and_then(|p| serde_cbor_diag::to_string_pretty(&p)
+                .map_err(|e| format!("{:?}", e)))
+            .unwrap_or_else(|e| e))
         .into()
 }
 
