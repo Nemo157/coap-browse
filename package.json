@@ -2,9 +2,8 @@
   "name": "coap-browse",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
   "scripts": {
-    "start": "parcel serve src/index.html"
+    "start": "parcel serve node_modules/vdom-websocket-rsjs/src/index.html"
   },
   "author": "",
   "license": "MIT OR Apache-2.0",
@@ -12,7 +11,6 @@
     "parcel-bundler": "^1.8.1"
   },
   "dependencies": {
-    "virtual-dom": "^2.1.1",
-    "vdom-rsjs": "https://github.com/Nemo157/vdom-rsjs"
+    "vdom-websocket-rsjs": "https://github.com/Nemo157/vdom-websocket-rsjs"
   }
 }

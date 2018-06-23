@@ -1,9 +1,8 @@
-use std::borrow::Cow;
 use std::sync::Arc;
-use std::collections::HashMap;
 
 use vdom_rsjs::{VNode, VTag, VProperty};
 use vdom_rsjs::render::{Render, Cache, TopCache};
+use vdom_websocket_rsjs::Action;
 use tokio_core::reactor::Handle;
 use tokio_coap::Client;
 use tokio_coap::message::Message as CoapMessage;
@@ -20,26 +19,9 @@ pub enum ActionTag {
     SubmitUrl,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Action {
-    tag: ActionTag,
-    associated: HashMap<String, String>,
-}
-
-impl Action {
-    pub fn new(tag: ActionTag) -> Action {
-        Action { tag, associated: HashMap::new() }
-    }
-
-    fn associate(mut self, name: impl Into<Cow<'static, str>>, prop: impl Into<Cow<'static, str>>) -> Action {
-        self.associated.insert(name.into().into_owned(), prop.into().into_owned());
-        self
-    }
-}
-
 #[derive(Debug)]
 enum Event {
-    Ui(Action),
+    Ui(Action<ActionTag>),
     Response {
         request: String,
         response: Result<CoapMessage, CoapError>,
@@ -54,7 +36,7 @@ struct State {
 }
 
 impl State {
-    fn spawn(handle: Handle) -> (impl Sink<SinkItem = Event, SinkError = ()>, impl Stream<Item = Arc<VNode<Action>>, Error = ()>) {
+    fn spawn(handle: Handle) -> (impl Sink<SinkItem = Event, SinkError = ()>, impl Stream<Item = Arc<VNode<Action<ActionTag>>>, Error = ()>) {
         let (events_tx, events_rx) = mpsc::channel(1);
         let (render_tx, render_rx) = mpsc::channel(1);
         let mut cache = TopCache::new();
@@ -116,8 +98,8 @@ impl State {
     }
 }
 
-impl Render<Action> for State {
-    fn render(&self, cache: &mut Cache<Action>) -> VNode<Action> {
+impl Render<Action<ActionTag>> for State {
+    fn render(&self, cache: &mut Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
         VTag::new("div")
             .prop("style", "display:flex;flex-direction:column;width:auto;height:auto;margin:10px 20px;border:1px solid #586e75;border-radius:3px")
             .child(VTag::new("div")
@@ -135,7 +117,7 @@ impl Render<Action> for State {
     }
 }
 
-pub fn new(handle: Handle) -> (impl Sink<SinkItem = Action, SinkError = ()>, impl Stream<Item = Arc<VNode<Action>>, Error = ()>) {
+pub fn new(handle: Handle) -> (impl Sink<SinkItem = Action<ActionTag>, SinkError = ()>, impl Stream<Item = Arc<VNode<Action<ActionTag>>>, Error = ()>) {
     let (events, renders) = State::spawn(handle.clone());
     let (ui, actions) = mpsc::channel(1);
 
