@@ -1,7 +1,10 @@
+cargo-features = ["edition"]
+
 [package]
 authors = ["Wim Looman <wim@nemo157.com>"]
 name = "coap-browse"
 version = "0.1.0"
+edition = "2018"
 
 [dependencies]
 futures = "0.1"

@@ -1,6 +1,6 @@
 use std::str;
 
-use client::ActionTag;
+use crate::client::ActionTag;
 use vdom_rsjs::{VNode, VTag};
 use vdom_rsjs::render::{Render, Cache};
 use vdom_websocket_rsjs::Action;
