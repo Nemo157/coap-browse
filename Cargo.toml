@@ -1,4 +1,4 @@
-cargo-features = ["edition"]
+cargo-features = ["edition", "rename-dependency"]
 
 [package]
 authors = ["Wim Looman <wim@nemo157.com>"]
@@ -7,14 +7,13 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-futures = "0.1"
 im = "10.2.0"
 serde_cbor = "0.8.2"
 serde_derive = "1.0.62"
 serde_json = "1.0.18"
 serde_xml = "0.9.1"
 tokio-core = "0.1.17"
-websocket = "0.20.2"
+either = "*"
 
 [dependencies.serde]
 features = ["rc"]
@@ -26,12 +25,20 @@ optional = false
 
 [dependencies.vdom-rsjs]
 git = "https://github.com/Nemo157/vdom-rsjs"
+branch = "send"
 optional = false
 
 [dependencies.vdom-websocket-rsjs]
 git = "https://github.com/Nemo157/vdom-websocket-rsjs"
+branch = "futures-0.3"
 optional = false
 
 [dependencies.serde_cbor-diag]
 git = "https://github.com/Nemo157/serde_cbor-diag-rs"
 optional = false
+
+[dependencies.futures]
+package = "futures-preview"
+git = "https://github.com/Nemo157/futures-rs"
+branch = "testing-compat"
+features = ["tokio-compat"]
