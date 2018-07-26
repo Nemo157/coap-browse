@@ -6,18 +6,21 @@
 #![feature(await_macro)]
 #![feature(arbitrary_self_types)]
 
+#![type_length_limit="2097152"]
+
 use tokio_core::reactor::Core;
-use futures::executor;
 use std::boxed::PinBox;
+use futures::future::{FutureExt, TryFutureExt};
 
 mod client;
 mod log;
 
 fn main() {
-    let core = Core::new().unwrap();
+    let mut core = Core::new().unwrap();
     let handle = core.handle();
 
     let server = vdom_websocket_rsjs::serve(handle.clone(), || PinBox::new(client::new()));
 
-    executor::block_on(server);
+    // executor::block_on(server);
+    core.run(PinBox::new(server.map(Ok::<_, ()>)).tokio_compat()).unwrap();
 }
