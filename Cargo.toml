@@ -40,5 +40,5 @@ optional = false
 [dependencies.futures]
 package = "futures-preview"
 git = "https://github.com/Nemo157/futures-rs"
-branch = "testing-compat"
+branch = "tokio-compat"
 features = ["tokio-compat"]

@@ -10,7 +10,7 @@ use im::ConsList;
 use serde_derive::{Deserialize, Serialize};
 
 use futures::{Sink, Stream, Future, FutureExt, SinkExt, StreamExt, future::self};
-use futures::compat::Future01Ext;
+use futures::compat::Future01CompatExt;
 use futures::channel::mpsc;
 use futures::executor;
 
