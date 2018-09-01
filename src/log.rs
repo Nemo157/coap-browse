@@ -28,10 +28,8 @@ pub enum SessionLog {
 
 fn render_request(url: &str) -> VNode<Action<ActionTag>> {
     VTag::new("div")
-        .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
-        .child(VTag::new("div")
-            .prop("style", "color:#586e75;padding:5px")
-            .child(format!("Request to {}", url)))
+        .prop("className", "request")
+        .child(VTag::new("div").child(format!("Request to {}", url)))
         .into()
 }
 
@@ -128,12 +126,9 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<Action<ActionTag>
     };
 
     VTag::new("div")
-        .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
+        .prop("className", "response good")
+        .child(VTag::new("div").child(format!("Response for {}", url)))
         .child(VTag::new("div")
-            .prop("style", "color:#859900;border-bottom:1px solid #93a1a1;padding:5px")
-            .child(format!("Response for {}", url)))
-        .child(VTag::new("div")
-            .prop("style", "border-bottom:1px solid #93a1a1;padding:5px")
             .child({
                 match (&fmt, fmt_name) {
                     (_, Some(fmt)) => format!("content format: {}", fmt),
@@ -142,21 +137,17 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<Action<ActionTag>
                 }
             })
             .child(render_payload(fmt, &msg.payload)))
-        .child(VTag::new("details")
-            .prop("style", "color:#93a1a1;padding:5px")
-            .child(VTag::new("summary").child("Raw message"))
-            .child(VTag::new("pre")
-                .prop("style", "margin-left:10px")
-                .child(format!("{:#?}", msg))))
+        .child(VTag::new("div")
+            .child(VTag::new("details")
+                .child(VTag::new("summary").child("Raw message"))
+                .child(VTag::new("pre").child(format!("{:#?}", msg)))))
         .into()
 }
 
 fn render_bad_response(url: &str, err: &CoapError) -> VNode<Action<ActionTag>> {
     VTag::new("div")
-        .prop("style", "display:flex;flex-direction:column;border:1px solid #93a1a1")
-        .child(VTag::new("div")
-            .prop("style", "color:#dc322f;border-bottom:1px solid #93a1a1;padding:5px")
-            .child(format!("Error requesting {}", url)))
+        .prop("className", "response bad")
+        .child(VTag::new("div").child(format!("Error requesting {}", url)))
         .child(VTag::new("pre").child(format!("{:#?}", err)))
         .into()
 }

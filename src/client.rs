@@ -101,18 +101,19 @@ impl State {
 impl Render<Action<ActionTag>> for State {
     fn render(&self, cache: &mut Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
         VTag::new("div")
-            .prop("style", "display:flex;flex-direction:column;width:auto;height:auto;margin:10px 20px;border:1px solid #586e75;border-radius:3px")
-            .child(VTag::new("div")
-                .prop("style", "display:flex;flex-direction:row;background-color:#eee8d5;border-bottom:1px solid #586e75")
-                .child(VTag::new("input")
-                    .prop("type", "text")
-                    .prop("placeholder", "coap url")
-                    .prop("onchange", VProperty::Action(
-                            Action::new(ActionTag::SubmitUrl)
-                                .associate("value", "value")))))
-            .child(VTag::new("div")
-                .prop("style", "display:flex;flex-direction:column;list-style:none")
-                .children(self.session_log.iter().map(|log| cache.render(log))))
+            .child(VTag::new("style").child(include_str!("style.css")))
+            .child(VTag::new("main")
+                .child(VTag::new("div")
+                    .prop("className", "toolbar")
+                    .child(VTag::new("input")
+                        .prop("type", "text")
+                        .prop("placeholder", "coap url")
+                        .prop("onchange", VProperty::Action(
+                                Action::new(ActionTag::SubmitUrl)
+                                    .associate("value", "value")))))
+                .child(VTag::new("div")
+                    .prop("className", "log")
+                    .children(self.session_log.iter().map(|log| cache.render(log)))))
             .into()
     }
 }
