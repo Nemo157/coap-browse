@@ -24,7 +24,8 @@ $ npm install
 $ npm start
 ```
 
-Load the frontend webpage in your browser
+Load the frontend webpage in your browser. [coap://coap.me](https://coap.me) is
+a useful server to test against.
 
 ## License
 
