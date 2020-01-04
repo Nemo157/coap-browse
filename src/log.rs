@@ -1,14 +1,11 @@
-use std::str;
-
-use crate::client::ActionTag;
-use vdom_rsjs::{VNode, VTag};
-use vdom_rsjs::render::{Render, Cache};
-use vdom_websocket_rsjs::Action;
+use std::{str, sync::Arc};
 
 use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::error::Error as CoapError;
 use tokio_coap::message::option::ContentFormat;
 use tokio_coap::message::option::Option as O;
+
+use iced::{Element, Text, Column};
 
 use serde_json;
 use serde_cbor;
@@ -22,34 +19,24 @@ pub enum SessionLog {
     },
     Response {
         request: String,
-        response: Result<CoapMessage, CoapError>,
+        response: Result<Arc<CoapMessage>, Arc<CoapError>>,
     },
 }
 
-fn render_request(url: &str) -> VNode<Action<ActionTag>> {
-    VTag::new("div")
-        .prop("className", "request")
-        .child(VTag::new("div").child(format!("Request to {}", url)))
+fn render_raw_payload(payload: &[u8]) -> Element<'static, !> {
+    Text::new(format!("{:#?}", payload))
         .into()
 }
 
-fn render_raw_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("pre")
-        .child(format!("{:#?}", payload))
-        .into()
-}
-
-fn render_json_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("pre")
-        .child(serde_json::from_slice::<serde_json::Value>(payload)
+fn render_json_payload(payload: &[u8]) -> Element<'static, !> {
+    Text::new(serde_json::from_slice::<serde_json::Value>(payload)
             .and_then(|p| serde_json::to_string_pretty(&p))
             .unwrap_or_else(|e| format!("{:?}", e)))
         .into()
 }
 
-fn render_cbor_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("pre")
-        .child(serde_cbor::from_slice::<serde_cbor::Value>(payload)
+fn render_cbor_payload(payload: &[u8]) -> Element<'static, !> {
+    Text::new(serde_cbor::from_slice::<serde_cbor::Value>(payload)
             .map_err(|e| format!("{:?}", e))
             .and_then(|p| serde_cbor_diag::to_string_pretty(&p)
                 .map_err(|e| format!("{:?}", e)))
@@ -57,9 +44,8 @@ fn render_cbor_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
         .into()
 }
 
-fn render_xml_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("pre")
-        .child(str::from_utf8(payload)
+fn render_xml_payload(payload: &[u8]) -> Element<'static, !> {
+    Text::new(str::from_utf8(payload)
             .map_err(Box::<dyn ::std::error::Error>::from)
             .and_then(|p| serde_xml::from_str::<serde_xml::value::Element>(p)
                 .map_err(Box::<dyn ::std::error::Error>::from))
@@ -68,22 +54,20 @@ fn render_xml_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
         .into()
 }
 
-fn render_link_format_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("pre")
-        .child(String::from_utf8_lossy(payload).into_owned())
+fn render_link_format_payload(payload: &[u8]) -> Element<'static, !> {
+    Text::new(String::from_utf8_lossy(payload).into_owned())
         .into()
 }
 
-fn render_plain_text_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("blockquote")
-        .child(String::from_utf8_lossy(payload).into_owned())
+fn render_plain_text_payload(payload: &[u8]) -> Element<'static, !> {
+    Text::new(String::from_utf8_lossy(payload).into_owned())
         .into()
 }
 
-fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<Action<ActionTag>> {
-    VTag::new("div")
-        .child("Payload: ")
-        .child({
+fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> Element<'static, !> {
+    Column::new()
+        .push(Text::new("Payload: "))
+        .push({
             if fmt == Some(ContentFormat::new(0)) {
                 render_plain_text_payload(payload)
             } else if fmt == Some(ContentFormat::new(40)) {
@@ -101,7 +85,7 @@ fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> VNode<Action<Ac
         .into()
 }
 
-fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<Action<ActionTag>> {
+fn render_good_response(url: &str, msg: &CoapMessage) -> Element<'static, !> {
     let fmt = match msg.options.get::<ContentFormat>() {
         Some(ref fmt) if fmt.len() == 1 => Some(fmt[0]),
         Some(_) => {
@@ -125,45 +109,42 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> VNode<Action<ActionTag>
         None
     };
 
-    VTag::new("div")
-        .prop("className", "response good")
-        .child(VTag::new("div").child(format!("Response for {}", url)))
-        .child(VTag::new("div")
-            .child({
-                match (&fmt, fmt_name) {
+    Column::new()
+        .push(Text::new(format!("Response for {}", url)))
+        .push(Column::new()
+            .push({
+                Text::new(match (&fmt, fmt_name) {
                     (_, Some(fmt)) => format!("content format: {}", fmt),
                     (Some(fmt), _) => format!("content format: {:?}", fmt),
                     (None, _) => "unspecified content format".to_owned(),
-                }
+                })
             })
-            .child(render_payload(fmt, &msg.payload)))
-        .child(VTag::new("div")
-            .child(VTag::new("details")
-                .child(VTag::new("summary").child("Raw message"))
-                .child(VTag::new("pre").child(format!("{:#?}", msg)))))
+            .push(render_payload(fmt, &msg.payload)))
+        .push(Column::new()
+            .push(Text::new("Raw message"))
+            .push(Text::new(format!("{:#?}", msg))))
         .into()
 }
 
-fn render_bad_response(url: &str, err: &CoapError) -> VNode<Action<ActionTag>> {
-    VTag::new("div")
-        .prop("className", "response bad")
-        .child(VTag::new("div").child(format!("Error requesting {}", url)))
-        .child(VTag::new("pre").child(format!("{:#?}", err)))
+fn render_bad_response(url: &str, err: &CoapError) -> Element<'static, !> {
+    Column::new()
+        .push(Text::new(format!("Error requesting {}", url)))
+        .push(Text::new(format!("{:#?}", err)))
         .into()
 }
 
-fn render_response(url: &str, response: &Result<CoapMessage, CoapError>) -> VNode<Action<ActionTag>> {
+fn render_response(url: &str, response: &Result<Arc<CoapMessage>, Arc<CoapError>>) -> Element<'static, !> {
     match response {
-        Ok(msg) => render_good_response(url, msg),
-        Err(err) => render_bad_response(url, err),
+        Ok(msg) => render_good_response(url, msg).into(),
+        Err(err) => render_bad_response(url, err).into(),
     }
 }
 
-impl Render<Action<ActionTag>> for SessionLog {
-    fn render(&self, _cache: &mut dyn Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
+impl SessionLog {
+    pub fn view(&mut self) -> Element<'_, !> {
         match self {
             SessionLog::Request { url }
-                => render_request(url),
+                => Text::new(format!("Request to {}", url)).into(),
             SessionLog::Response { request, response }
                 => render_response(request, response),
         }

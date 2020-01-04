@@ -6,26 +6,9 @@ prototype.
 
 ## Running
 
-This is a sort of hybrid local/web application, similar to Electron based apps,
-but instead of bundling a whole web browser it runs a small rendering engine in
-your normal browser and streams virtual DOM changes to this over a WebSocket
-from a Rust backend.
-
-Start the backend server:
-
-```sh
-$ cargo run
+```console
+> cargo run
 ```
-
-Start the frontend server:
-
-```sh
-$ npm install
-$ npm start
-```
-
-Load the frontend webpage in your browser. [coap://coap.me](https://coap.me) is
-a useful server to test against.
 
 ## License
 

@@ -3,18 +3,36 @@
 
 #![warn(rust_2018_idioms)]
 
-use tokio_core::reactor::Core;
+use iced::{Application, Command, Element, Settings};
 
 mod client;
 mod log;
 
+#[derive(Default)]
+struct CoapBrowse {
+    client: client::State,
+}
+
+impl Application for CoapBrowse {
+    type Message = client::StateMessage;
+
+    fn new() -> (Self, Command<Self::Message>) {
+        (Self::default(), Command::none())
+    }
+
+    fn title(&self) -> String {
+        String::from("coap-browse")
+    }
+
+    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+        self.client.update(message)
+    }
+
+    fn view(&mut self) -> Element<'_, Self::Message> {
+        self.client.view()
+    }
+}
+
 fn main() {
-    let mut core = Core::new().unwrap();
-    let handle = core.handle();
-
-    let server = vdom_websocket_rsjs::serve(
-        handle.clone(),
-        move || client::new(handle.clone()));
-
-    core.run(server).unwrap();
+    CoapBrowse::run(Settings::default())
 }
