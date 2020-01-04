@@ -8,11 +8,12 @@ use tokio_coap::Client;
 use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::error::Error as CoapError;
 use im::ConsList;
+use serde_derive::{Deserialize, Serialize};
 
 use futures::{Sink, Stream, Future, future::{self, Either}};
 use futures::unsync::mpsc;
 
-use log::SessionLog;
+use crate::log::SessionLog;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionTag {
@@ -99,7 +100,7 @@ impl State {
 }
 
 impl Render<Action<ActionTag>> for State {
-    fn render(&self, cache: &mut Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
+    fn render(&self, cache: &mut dyn Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
         VTag::new("div")
             .child(VTag::new("style").child(include_str!("style.css")))
             .child(VTag::new("main")

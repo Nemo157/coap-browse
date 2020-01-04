@@ -1,6 +1,6 @@
 use std::str;
 
-use client::ActionTag;
+use crate::client::ActionTag;
 use vdom_rsjs::{VNode, VTag};
 use vdom_rsjs::render::{Render, Cache};
 use vdom_websocket_rsjs::Action;
@@ -60,9 +60,9 @@ fn render_cbor_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
 fn render_xml_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
     VTag::new("pre")
         .child(str::from_utf8(payload)
-            .map_err(|e| Box::<::std::error::Error>::from(e))
+            .map_err(Box::<dyn ::std::error::Error>::from)
             .and_then(|p| serde_xml::from_str::<serde_xml::value::Element>(p)
-                .map_err(|e| Box::<::std::error::Error>::from(e)))
+                .map_err(Box::<dyn ::std::error::Error>::from))
             .map(|p| format!("{:#?}", p))
             .unwrap_or_else(|e| format!("{:#?}", e)))
         .into()
@@ -160,7 +160,7 @@ fn render_response(url: &str, response: &Result<CoapMessage, CoapError>) -> VNod
 }
 
 impl Render<Action<ActionTag>> for SessionLog {
-    fn render(&self, _cache: &mut Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
+    fn render(&self, _cache: &mut dyn Cache<Action<ActionTag>>) -> VNode<Action<ActionTag>> {
         match self {
             SessionLog::Request { url }
                 => render_request(url),
