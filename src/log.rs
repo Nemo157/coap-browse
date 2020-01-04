@@ -60,9 +60,9 @@ fn render_cbor_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
 fn render_xml_payload(payload: &[u8]) -> VNode<Action<ActionTag>> {
     VTag::new("pre")
         .child(str::from_utf8(payload)
-            .map_err(|e| Box::<dyn ::std::error::Error>::from(e))
+            .map_err(Box::<dyn ::std::error::Error>::from)
             .and_then(|p| serde_xml::from_str::<serde_xml::value::Element>(p)
-                .map_err(|e| Box::<dyn ::std::error::Error>::from(e)))
+                .map_err(Box::<dyn ::std::error::Error>::from))
             .map(|p| format!("{:#?}", p))
             .unwrap_or_else(|e| format!("{:#?}", e)))
         .into()
