@@ -5,7 +5,8 @@ use tokio_coap::error::Error as CoapError;
 use tokio_coap::message::option::ContentFormat;
 use tokio_coap::message::option::Option as O;
 
-use iced::{Element, Text, Column};
+use iced::{Element, Text, Column, Font};
+use once_cell::sync::Lazy;
 
 use serde_json;
 use serde_cbor;
@@ -23,8 +24,22 @@ pub enum SessionLog {
     },
 }
 
+static MONOSPACE: Lazy<Font> = Lazy::new(|| {
+    use font_kit::{source::SystemSource, family_name::FamilyName, properties::Properties};
+    let font = SystemSource::new()
+            .select_best_match(&[FamilyName::Monospace], &Properties::new())
+            .unwrap()
+            .load()
+            .unwrap();
+    Font::External {
+        name: Box::leak(font.full_name().into_boxed_str()),
+        bytes: Box::leak(font.copy_font_data().unwrap().as_ref().clone().into_boxed_slice()),
+    }
+});
+
 fn render_raw_payload(payload: &[u8]) -> Element<'static, !> {
     Text::new(format!("{:#?}", payload))
+        .font(MONOSPACE.clone())
         .into()
 }
 
@@ -32,6 +47,7 @@ fn render_json_payload(payload: &[u8]) -> Element<'static, !> {
     Text::new(serde_json::from_slice::<serde_json::Value>(payload)
             .and_then(|p| serde_json::to_string_pretty(&p))
             .unwrap_or_else(|e| format!("{:?}", e)))
+        .font(MONOSPACE.clone())
         .into()
 }
 
@@ -41,6 +57,7 @@ fn render_cbor_payload(payload: &[u8]) -> Element<'static, !> {
             .and_then(|p| serde_cbor_diag::to_string_pretty(&p)
                 .map_err(|e| format!("{:?}", e)))
             .unwrap_or_else(|e| e))
+        .font(MONOSPACE.clone())
         .into()
 }
 
@@ -51,16 +68,19 @@ fn render_xml_payload(payload: &[u8]) -> Element<'static, !> {
                 .map_err(Box::<dyn ::std::error::Error>::from))
             .map(|p| format!("{:#?}", p))
             .unwrap_or_else(|e| format!("{:#?}", e)))
+        .font(MONOSPACE.clone())
         .into()
 }
 
 fn render_link_format_payload(payload: &[u8]) -> Element<'static, !> {
     Text::new(String::from_utf8_lossy(payload).into_owned())
+        .font(MONOSPACE.clone())
         .into()
 }
 
 fn render_plain_text_payload(payload: &[u8]) -> Element<'static, !> {
     Text::new(String::from_utf8_lossy(payload).into_owned())
+        .font(MONOSPACE.clone())
         .into()
 }
 
@@ -122,7 +142,7 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> Element<'static, !> {
             .push(render_payload(fmt, &msg.payload)))
         .push(Column::new()
             .push(Text::new("Raw message"))
-            .push(Text::new(format!("{:#?}", msg))))
+            .push(Text::new(format!("{:#?}", msg)).font(MONOSPACE.clone())))
         .into()
 }
 

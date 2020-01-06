@@ -12,6 +12,8 @@ serde_xml = "0.9.1"
 tokio-compat = "0.1.2"
 iced = "0.1.0-beta"
 iced_native = "0.1.0"
+once_cell = "1.2.0"
+font-kit = "0.5.0"
 
 [dependencies.futures]
 version = "0.3.1"
