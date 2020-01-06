@@ -181,6 +181,48 @@ version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "clipboard-win"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "clipboard_macos"
+version = "0.1.0-alpha"
+source = "git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf#22c6dd6c04cd05d528029b50a30c56417cd4bebf"
+dependencies = [
+ "objc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "objc-foundation 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "objc_id 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "clipboard_wayland"
+version = "0.1.0-alpha"
+source = "git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf#22c6dd6c04cd05d528029b50a30c56417cd4bebf"
+dependencies = [
+ "smithay-clipboard 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "clipboard_windows"
+version = "0.1.0-alpha"
+source = "git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf#22c6dd6c04cd05d528029b50a30c56417cd4bebf"
+dependencies = [
+ "clipboard-win 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "clipboard_x11"
+version = "0.1.0-alpha"
+source = "git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf#22c6dd6c04cd05d528029b50a30c56417cd4bebf"
+dependencies = [
+ "xcb 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,7 +244,7 @@ version = "0.1.0"
 dependencies = [
  "font-kit 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "iced 0.1.0-beta (registry+https://github.com/rust-lang/crates.io-index)",
+ "iced 0.1.0-beta (git+https://github.com/hecrj/iced)",
  "iced_native 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "once_cell 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -936,11 +978,19 @@ dependencies = [
 [[package]]
 name = "iced"
 version = "0.1.0-beta"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/hecrj/iced#8311500ac03a95927022d8eec8178ba7d87b0010"
 dependencies = [
- "iced_web 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "iced_wgpu 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "iced_winit 0.1.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iced_web 0.1.0 (git+https://github.com/hecrj/iced)",
+ "iced_wgpu 0.1.0 (git+https://github.com/hecrj/iced)",
+ "iced_winit 0.1.0-alpha (git+https://github.com/hecrj/iced)",
+]
+
+[[package]]
+name = "iced_core"
+version = "0.1.0"
+source = "git+https://github.com/hecrj/iced#8311500ac03a95927022d8eec8178ba7d87b0010"
+dependencies = [
+ "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -949,6 +999,18 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "iced_native"
+version = "0.1.0"
+source = "git+https://github.com/hecrj/iced#8311500ac03a95927022d8eec8178ba7d87b0010"
+dependencies = [
+ "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iced_core 0.1.0 (git+https://github.com/hecrj/iced)",
+ "raw-window-handle 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "twox-hash 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-segmentation 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -964,11 +1026,11 @@ dependencies = [
 [[package]]
 name = "iced_web"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/hecrj/iced#8311500ac03a95927022d8eec8178ba7d87b0010"
 dependencies = [
  "dodrio 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "iced_core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iced_core 0.1.0 (git+https://github.com/hecrj/iced)",
  "wasm-bindgen 0.2.56 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen-futures 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "web-sys 0.3.33 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -977,28 +1039,30 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/hecrj/iced#8311500ac03a95927022d8eec8178ba7d87b0010"
 dependencies = [
  "font-kit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glam 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glyph_brush 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "iced_native 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iced_native 0.1.0 (git+https://github.com/hecrj/iced)",
  "image 0.22.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "raw-window-handle 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "wgpu 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wgpu_glyph 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wgpu_glyph 0.7.0 (git+https://github.com/hecrj/wgpu_glyph?branch=fix/font-load-panic)",
 ]
 
 [[package]]
 name = "iced_winit"
-version = "0.1.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.1.0-alpha"
+source = "git+https://github.com/hecrj/iced#8311500ac03a95927022d8eec8178ba7d87b0010"
 dependencies = [
  "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "iced_native 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iced_native 0.1.0 (git+https://github.com/hecrj/iced)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "winit 0.20.0-alpha4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "window_clipboard 0.1.0-alpha.2 (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)",
+ "winit 0.20.0-alpha4 (git+https://github.com/hecrj/winit?rev=709808eb4e69044705fcb214bcc30556db761405)",
 ]
 
 [[package]]
@@ -1367,11 +1431,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc-foundation"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "block 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "objc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "objc_id 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "objc_exception"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cc 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "objc_id"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "objc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1901,6 +1983,15 @@ dependencies = [
  "nix 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "wayland-client 0.23.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "wayland-protocols 0.23.6 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "smithay-clipboard"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nix 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "smithay-client-toolkit 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2501,8 +2592,8 @@ dependencies = [
 
 [[package]]
 name = "wgpu_glyph"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.7.0"
+source = "git+https://github.com/hecrj/wgpu_glyph?branch=fix/font-load-panic#b2b26a04d87af2df6263c10c053bda39507d7641"
 dependencies = [
  "glyph_brush 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2547,9 +2638,21 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "window_clipboard"
+version = "0.1.0-alpha.2"
+source = "git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf#22c6dd6c04cd05d528029b50a30c56417cd4bebf"
+dependencies = [
+ "clipboard_macos 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)",
+ "clipboard_wayland 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)",
+ "clipboard_windows 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)",
+ "clipboard_x11 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)",
+ "raw-window-handle 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "winit"
 version = "0.20.0-alpha4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/hecrj/winit?rev=709808eb4e69044705fcb214bcc30556db761405#709808eb4e69044705fcb214bcc30556db761405"
 dependencies = [
  "android_glue 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2608,6 +2711,15 @@ dependencies = [
  "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)",
  "maybe-uninit 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkg-config 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "xcb"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2671,6 +2783,11 @@ dependencies = [
 "checksum calloop 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "7aa2097be53a00de9e8fc349fea6d76221f398f5c4fa550d420669906962d160"
 "checksum cc 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)" = "f52a465a666ca3d838ebbf08b241383421412fe7ebb463527bba275526d89f76"
 "checksum cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)" = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
+"checksum clipboard-win 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e3a093d6fed558e5fe24c3dfc85a68bb68f1c824f440d3ba5aca189e2998786b"
+"checksum clipboard_macos 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)" = "<none>"
+"checksum clipboard_wayland 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)" = "<none>"
+"checksum clipboard_windows 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)" = "<none>"
+"checksum clipboard_x11 0.1.0-alpha (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)" = "<none>"
 "checksum cloudabi 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 "checksum cmake 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)" = "81fb25b677f8bf1eb325017cb6bb8452f87969db0fedb4f757b297bee78a7c62"
 "checksum cocoa 0.19.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f29f7768b2d1be17b96158e3285951d366b40211320fb30826a76cb7a0da6400"
@@ -2749,12 +2866,14 @@ dependencies = [
 "checksum hermit-abi 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "eff2656d88f158ce120947499e971d743c05dbcbed62e5bd2f38f1698bbc3772"
 "checksum hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
 "checksum hibitset 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "47e7292fd9f7fe89fa35c98048f2d0a69b79ed243604234d18f6f8a1aa6f408d"
-"checksum iced 0.1.0-beta (registry+https://github.com/rust-lang/crates.io-index)" = "2fad2a75ba15d91ffcb05952fdf0b9be81a26b4c079e0865837832e0d10418f8"
+"checksum iced 0.1.0-beta (git+https://github.com/hecrj/iced)" = "<none>"
+"checksum iced_core 0.1.0 (git+https://github.com/hecrj/iced)" = "<none>"
 "checksum iced_core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ecc3eb57bedfe888d13f35f7778f21b8a601f42c4a2caeff2edf6779bdde47fd"
+"checksum iced_native 0.1.0 (git+https://github.com/hecrj/iced)" = "<none>"
 "checksum iced_native 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "97fa19270da5751d1baf8cee64579a78b4d15957d5276188a378b52007e0b37c"
-"checksum iced_web 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7161af9226b8108874ed11dfa71be0c9785bb495b9255023c3c3e342c45caf42"
-"checksum iced_wgpu 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6aeb6227ed0553c679916e2a87a0228c7357aea0c7144b6b6208ef330f99d68f"
-"checksum iced_winit 0.1.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)" = "e2bd243733d25196d299900fde29d98127c1d9a9a3d7bff691bb46bc879342c4"
+"checksum iced_web 0.1.0 (git+https://github.com/hecrj/iced)" = "<none>"
+"checksum iced_wgpu 0.1.0 (git+https://github.com/hecrj/iced)" = "<none>"
+"checksum iced_winit 0.1.0-alpha (git+https://github.com/hecrj/iced)" = "<none>"
 "checksum image 0.22.3 (registry+https://github.com/rust-lang/crates.io-index)" = "7b4be8aaefbe7545dc42ae925afb55a0098f226a3fe5ef721872806f44f57826"
 "checksum inflate 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)" = "1cdb29978cc5797bd8dcc8e5bf7de604891df2a8dc576973d71a281e916db2ff"
 "checksum instant 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6c346c299e3fe8ef94dc10c2c0253d858a69aac1245157a3bf4125915d528caf"
@@ -2798,7 +2917,9 @@ dependencies = [
 "checksum num-traits 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)" = "d4c81ffc11c212fa327657cb19dd85eb7419e163b5b076bede2bdb5c974c07e4"
 "checksum num_cpus 1.11.1 (registry+https://github.com/rust-lang/crates.io-index)" = "76dac5ed2a876980778b8b85f75a71b6cbf0db0b1232ee12f826bccb00d09d72"
 "checksum objc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)" = "915b1b472bc21c53464d6c8461c9d3af805ba1ef837e1cac254428f4a77177b1"
+"checksum objc-foundation 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1add1b659e36c9607c7aab864a76c7a4c2760cd0cd2e120f3fb8b952c7e22bf9"
 "checksum objc_exception 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ad970fb455818ad6cba4c122ad012fae53ae8b4795f86378bce65e4f6bab2ca4"
+"checksum objc_id 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c92d4ddb4bd7b50d730c215ff871754d0da6b2178849f8a2a2ab69712d0c073b"
 "checksum once_cell 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "891f486f630e5c5a4916c7e16c4b24a53e78c860b646e9f8e005e4f16847bfed"
 "checksum ordered-float 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "18869315e81473c951eb56ad5558bbc56978562d3ecfb87abb7a1e944cea4518"
 "checksum parking_lot 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f842b1982eb6c2fe34036a4fbfb06dd185a3f5c8edfaacdf7d1ea10b07de6252"
@@ -2863,6 +2984,7 @@ dependencies = [
 "checksum smallvec 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1347484b6f8bc4b32a9323d9800b6d934376391002ad9c528cc659fe8afc08ee"
 "checksum smallvec 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)" = "f7b0758c52e15a8b5e3691eae6cc559f08eee9406e548a4477ba4e67770a82b6"
 "checksum smithay-client-toolkit 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "93960e8975909fcb14cc755de93af2149d8b8f4eb368315537d40cfd0f324054"
+"checksum smithay-clipboard 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "9667a262ef7a9ff1c55a7e665cd3d36f9bc2809f94167b1fb3fc31423a83f8c0"
 "checksum sourcefile 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "4bf77cb82ba8453b42b6ae1d692e4cdc92f9a47beaf89a847c8be83f4e328ad3"
 "checksum spirv_cross 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fbbe441b3ac8ec0ae6a4f05234239bd372a241ce15793eef694e8b24afc267bb"
 "checksum stb_truetype 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f77b6b07e862c66a9f3e62a07588fee67cd90a9135a2b942409f195507b4fb51"
@@ -2919,18 +3041,20 @@ dependencies = [
 "checksum weedle 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3bb43f70885151e629e2a19ce9e50bd730fd436cfd4b666894c9ce4de9141164"
 "checksum wgpu 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "07e9c1ff587eddd68cdf2a78889c7a2128683161c72c67b94457cf498accaf7b"
 "checksum wgpu-native 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "282dea6c13cfab27737dc34f131dd1ba72ff990f61c27f57f9299bec3d1c5de5"
-"checksum wgpu_glyph 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f58b24b8d1f51ce0e7e0e2e45ebb72e4ba2db1926e51d47e287c78861298acd9"
+"checksum wgpu_glyph 0.7.0 (git+https://github.com/hecrj/wgpu_glyph?branch=fix/font-load-panic)" = "<none>"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)" = "8093091eeb260906a183e6ae1abdba2ef5ef2257a21801128899c3fc699229c6"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
 "checksum winapi-i686-pc-windows-gnu 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
 "checksum winapi-util 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7168bab6e1daee33b4557efd0e95d5ca70a03706d39fa5f3fe7a236f584b03c9"
 "checksum winapi-x86_64-pc-windows-gnu 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
-"checksum winit 0.20.0-alpha4 (registry+https://github.com/rust-lang/crates.io-index)" = "56c565622ccb05351d92445415952ca09dade6a53e75dd9e75d9bd35d4e99333"
+"checksum window_clipboard 0.1.0-alpha.2 (git+https://github.com/hecrj/window_clipboard?rev=22c6dd6c04cd05d528029b50a30c56417cd4bebf)" = "<none>"
+"checksum winit 0.20.0-alpha4 (git+https://github.com/hecrj/winit?rev=709808eb4e69044705fcb214bcc30556db761405)" = "<none>"
 "checksum wio 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "5d129932f4644ac2396cb456385cbf9e63b5b30c6e8dc4820bdca4eb082037a5"
 "checksum ws2_32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d59cefebd0c892fa2dd6de581e937301d8552cb44489cdff035c6187cb63fa5e"
 "checksum x11 2.18.1 (registry+https://github.com/rust-lang/crates.io-index)" = "39697e3123f715483d311b5826e254b6f3cfebdd83cf7ef3358f579c3d68e235"
 "checksum x11-dl 2.18.4 (registry+https://github.com/rust-lang/crates.io-index)" = "be65e1342a3baae65439cd03306778831a3d133b0d20243a7fb83fd5cf403c58"
+"checksum xcb 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "62056f63138b39116f82a540c983cc11f1c90cd70b3d492a70c25eaa50bd22a6"
 "checksum xdg 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d089681aa106a86fade1b0128fb5daf07d5867a509ab036d99988dec80429a57"
 "checksum xi-unicode 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7395cdb9d0a6219fa0ea77d08c946adf9c1984c72fcd443ace30365f3daadef7"
 "checksum xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "541b12c998c5b56aa2b4e6f18f03664eef9a4fd0a246a55594efae6cc2d964b5"

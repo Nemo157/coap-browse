@@ -34,3 +34,6 @@ features = ["net"]
 [dependencies.serde_cbor-diag]
 git = "https://github.com/Nemo157/serde_cbor-diag-rs"
 optional = false
+
+[patch.crates-io]
+iced = { git = "https://github.com/hecrj/iced" }

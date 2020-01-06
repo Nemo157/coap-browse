@@ -7,7 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 use iced::{Column, Row, Command, Element, widget::text_input, TextInput};
 use futures::compat::Future01CompatExt;
 
-use crate::log::SessionLog;
+use crate::log::{SessionLog, SessionLogMsg};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionTag {
@@ -21,7 +21,11 @@ pub enum StateMessage {
     Response {
         request: String,
         response: Result<Arc<CoapMessage>, Arc<CoapError>>,
-    }
+    },
+    LogMsg {
+        index: usize,
+        msg: SessionLogMsg,
+    },
 }
 
 #[derive(Debug)]
@@ -64,8 +68,12 @@ impl State {
                 })
             }
             StateMessage::Response { request, response } => {
-                self.session_log.push(SessionLog::Response { request, response });
+                self.session_log.push(SessionLog::response(request, response));
                 Command::none()
+            }
+            StateMessage::LogMsg { index, msg } => {
+                // TODO: This index will be out of date if the list changes
+                self.session_log[index].update(msg).map(move |msg| StateMessage::LogMsg { index, msg })
             }
         }
     }
@@ -75,10 +83,10 @@ impl State {
                 .push(Row::new().push(TextInput::new(&mut self.url_state, "coap url", &self.url, StateMessage::UrlChange).on_submit(StateMessage::SubmitUrl)))
                 .push({
                     let mut col = Column::new();
-                    for log in self.session_log.iter_mut().rev() {
-                        col = col.push(log.view());
+                    for (index, log) in self.session_log.iter_mut().enumerate().rev() {
+                        col = col.push(log.view().map(move |msg| StateMessage::LogMsg { index, msg }));
                     }
-                    Element::from(col).map(|e| match e {})
+                    Element::from(col)
                 })
                 .into()
     }

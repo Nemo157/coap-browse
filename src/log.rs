@@ -5,7 +5,7 @@ use tokio_coap::error::Error as CoapError;
 use tokio_coap::message::option::ContentFormat;
 use tokio_coap::message::option::Option as O;
 
-use iced::{Element, Text, Column, Font};
+use iced::{Element, Text, Column, Font, Button, widget::button, Row, Command};
 use once_cell::sync::Lazy;
 
 use serde_json;
@@ -13,15 +13,39 @@ use serde_cbor;
 use serde_cbor_diag;
 use serde_xml;
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum DisplayType {
+    Rendered,
+    Raw,
+}
+
+#[derive(Debug)]
+pub struct GoodResponse {
+    request: String,
+    response: Arc<CoapMessage>,
+    rendered_button_state: button::State,
+    raw_button_state: button::State,
+    display: DisplayType,
+}
+
+#[derive(Debug)]
+pub struct BadResponse {
+    request: String,
+    error: Arc<CoapError>,
+}
+
 #[derive(Debug)]
 pub enum SessionLog {
     Request {
         url: String,
     },
-    Response {
-        request: String,
-        response: Result<Arc<CoapMessage>, Arc<CoapError>>,
-    },
+    GoodResponse(GoodResponse),
+    BadResponse(BadResponse),
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum SessionLogMsg {
+    SwitchDisplay(DisplayType),
 }
 
 static MONOSPACE: Lazy<Font> = Lazy::new(|| {
@@ -105,33 +129,42 @@ fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> Element<'static
         .into()
 }
 
-fn render_good_response(url: &str, msg: &CoapMessage) -> Element<'static, !> {
-    let fmt = match msg.options.get::<ContentFormat>() {
-        Some(ref fmt) if fmt.len() == 1 => Some(fmt[0]),
-        Some(_) => {
-            println!("Invalid ContentFormat");
-            None
+impl GoodResponse {
+    fn update(&mut self, msg: SessionLogMsg) -> Command<SessionLogMsg> {
+        match msg {
+            SessionLogMsg::SwitchDisplay(display) => {
+                self.display = display;
+                Command::none()
+            }
         }
-        None => None,
-    };
+    }
 
-    let fmt_name = if fmt == Some(ContentFormat::new(0)) {
-        Some("text/plain; charset=utf-8")
-    } else if fmt == Some(ContentFormat::new(40)) {
-        Some("application/link-format")
-    } else if fmt == Some(ContentFormat::new(41)) {
-        Some("application/xml")
-    } else if fmt == Some(ContentFormat::new(50)) {
-        Some("application/json")
-    } else if fmt == Some(ContentFormat::new(60)) {
-        Some("application/cbor")
-    } else {
-        None
-    };
+    fn view(&mut self) -> Element<'_, SessionLogMsg> {
+        let fmt = match self.response.options.get::<ContentFormat>() {
+            Some(ref fmt) if fmt.len() == 1 => Some(fmt[0]),
+            Some(_) => {
+                println!("Invalid ContentFormat");
+                None
+            }
+            None => None,
+        };
 
-    Column::new()
-        .push(Text::new(format!("Response for {}", url)))
-        .push(Column::new()
+        let fmt_name = if fmt == Some(ContentFormat::new(0)) {
+            Some("text/plain; charset=utf-8")
+        } else if fmt == Some(ContentFormat::new(40)) {
+            Some("application/link-format")
+        } else if fmt == Some(ContentFormat::new(41)) {
+            Some("application/xml")
+        } else if fmt == Some(ContentFormat::new(50)) {
+            Some("application/json")
+        } else if fmt == Some(ContentFormat::new(60)) {
+            Some("application/cbor")
+        } else {
+            None
+        };
+
+        Column::new()
+            .push(Text::new(format!("Response for {}", self.request)))
             .push({
                 Text::new(match (&fmt, fmt_name) {
                     (_, Some(fmt)) => format!("content format: {}", fmt),
@@ -139,34 +172,59 @@ fn render_good_response(url: &str, msg: &CoapMessage) -> Element<'static, !> {
                     (None, _) => "unspecified content format".to_owned(),
                 })
             })
-            .push(render_payload(fmt, &msg.payload)))
-        .push(Column::new()
-            .push(Text::new("Raw message"))
-            .push(Text::new(format!("{:#?}", msg)).font(MONOSPACE.clone())))
-        .into()
+            .push(Row::new()
+                .push(Text::new("display:"))
+                .push(Button::new(&mut self.rendered_button_state, Text::new("rendered").color(if self.display == DisplayType::Rendered { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(SessionLogMsg::SwitchDisplay(DisplayType::Rendered)))
+                .push(Button::new(&mut self.raw_button_state, Text::new("raw").color(if self.display == DisplayType::Raw { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(SessionLogMsg::SwitchDisplay(DisplayType::Raw))))
+            .push(match self.display {
+                DisplayType::Rendered => render_payload(fmt, &self.response.payload),
+                DisplayType::Raw => Text::new(format!("{:#?}", self.response)).font(MONOSPACE.clone()).into(),
+            }.map(|m| match m{}))
+            .into()
+    }
 }
 
-fn render_bad_response(url: &str, err: &CoapError) -> Element<'static, !> {
-    Column::new()
-        .push(Text::new(format!("Error requesting {}", url)))
-        .push(Text::new(format!("{:#?}", err)))
-        .into()
-}
-
-fn render_response(url: &str, response: &Result<Arc<CoapMessage>, Arc<CoapError>>) -> Element<'static, !> {
-    match response {
-        Ok(msg) => render_good_response(url, msg).into(),
-        Err(err) => render_bad_response(url, err).into(),
+impl BadResponse {
+    fn view(&mut self) -> Element<'_, !> {
+        Column::new()
+            .push(Text::new(format!("Error requesting {}", self.request)))
+            .push(Text::new(format!("{:#?}", self.error)))
+            .into()
     }
 }
 
 impl SessionLog {
-    pub fn view(&mut self) -> Element<'_, !> {
+    pub fn response(request: String, response: Result<Arc<CoapMessage>, Arc<CoapError>>) -> Self {
+        match response {
+            Ok(response) => SessionLog::GoodResponse(GoodResponse {
+                request,
+                response,
+                rendered_button_state: button::State::new(),
+                raw_button_state: button::State::new(),
+                display: DisplayType::Rendered,
+            }),
+            Err(error) => SessionLog::BadResponse(BadResponse {
+                request,
+                error,
+            }),
+        }
+    }
+
+    pub fn update(&mut self, msg: SessionLogMsg) -> Command<SessionLogMsg> {
+        match self {
+            SessionLog::Request { .. } | SessionLog::BadResponse(_) => unreachable!(),
+            SessionLog::GoodResponse(response) => response.update(msg),
+        }
+    }
+
+    pub fn view(&mut self) -> Element<'_, SessionLogMsg> {
         match self {
             SessionLog::Request { url }
                 => Text::new(format!("Request to {}", url)).into(),
-            SessionLog::Response { request, response }
-                => render_response(request, response),
+            SessionLog::GoodResponse(response)
+                => response.view(),
+            SessionLog::BadResponse(response)
+                => response.view().map(|m| match m{}),
         }
     }
 }
