@@ -4,7 +4,7 @@ use tokio_coap::Client;
 use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::error::Error as CoapError;
 use serde_derive::{Deserialize, Serialize};
-use iced::{Column, Row, Command, Element, widget::text_input, TextInput};
+use iced::{Column, Row, Command, Element, widget::{text_input, scrollable}, TextInput, Scrollable};
 use futures::compat::Future01CompatExt;
 
 use crate::log::{SessionLog, SessionLogMsg};
@@ -34,6 +34,7 @@ pub struct State {
     url: String,
     url_state: text_input::State,
     rt: tokio_compat::runtime::Runtime,
+    scrollable_state: scrollable::State,
 }
 
 impl Default for State {
@@ -43,6 +44,7 @@ impl Default for State {
             url: "".to_owned(),
             url_state: text_input::State::new(),
             rt: tokio_compat::runtime::Runtime::new().unwrap(),
+            scrollable_state: scrollable::State::new(),
         }
     }
 }
@@ -82,11 +84,11 @@ impl State {
         Column::new()
                 .push(Row::new().push(TextInput::new(&mut self.url_state, "coap url", &self.url, StateMessage::UrlChange).on_submit(StateMessage::SubmitUrl)))
                 .push({
-                    let mut col = Column::new();
+                    let mut logs = Scrollable::new(&mut self.scrollable_state);
                     for (index, log) in self.session_log.iter_mut().enumerate().rev() {
-                        col = col.push(log.view().map(move |msg| StateMessage::LogMsg { index, msg }));
+                        logs = logs.push(log.view().map(move |msg| StateMessage::LogMsg { index, msg }));
                     }
-                    Element::from(col)
+                    logs
                 })
                 .into()
     }
