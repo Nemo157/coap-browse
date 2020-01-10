@@ -1,17 +1,17 @@
 use std::{str, sync::Arc};
 
 use tokio_coap::message::Message as CoapMessage;
-use tokio_coap::error::Error as CoapError;
 use tokio_coap::message::option::ContentFormat;
 use tokio_coap::message::option::Option as O;
 
-use iced::{Element, Text, Column, Font, Button, widget::button, Row, Command};
-use once_cell::sync::Lazy;
+use iced::{Element, Text, Column, Button, widget::button, Row, Command};
 
 use serde_json;
 use serde_cbor;
 use serde_cbor_diag;
 use serde_xml;
+
+use super::resources::MONOSPACE;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum DisplayType {
@@ -20,7 +20,7 @@ pub enum DisplayType {
 }
 
 #[derive(Debug)]
-pub struct GoodResponse {
+pub struct Response {
     request: String,
     response: Arc<CoapMessage>,
     rendered_button_state: button::State,
@@ -28,38 +28,10 @@ pub struct GoodResponse {
     display: DisplayType,
 }
 
-#[derive(Debug)]
-pub struct BadResponse {
-    request: String,
-    error: Arc<CoapError>,
-}
-
-#[derive(Debug)]
-pub enum SessionLog {
-    Request {
-        url: String,
-    },
-    GoodResponse(GoodResponse),
-    BadResponse(BadResponse),
-}
-
 #[derive(Copy, Clone, Debug)]
-pub enum SessionLogMsg {
+pub enum Msg {
     SwitchDisplay(DisplayType),
 }
-
-static MONOSPACE: Lazy<Font> = Lazy::new(|| {
-    use font_kit::{source::SystemSource, family_name::FamilyName, properties::Properties};
-    let font = SystemSource::new()
-            .select_best_match(&[FamilyName::Monospace], &Properties::new())
-            .unwrap()
-            .load()
-            .unwrap();
-    Font::External {
-        name: Box::leak(font.full_name().into_boxed_str()),
-        bytes: Box::leak(font.copy_font_data().unwrap().as_ref().clone().into_boxed_slice()),
-    }
-});
 
 fn render_raw_payload(payload: &[u8]) -> Element<'static, !> {
     Text::new(format!("{:#?}", payload))
@@ -129,17 +101,27 @@ fn render_payload(fmt: Option<ContentFormat>, payload: &[u8]) -> Element<'static
         .into()
 }
 
-impl GoodResponse {
-    fn update(&mut self, msg: SessionLogMsg) -> Command<SessionLogMsg> {
+impl Response {
+    pub fn new(request: String, response: Arc<CoapMessage>) -> Self {
+        Self {
+            request,
+            response,
+            rendered_button_state: button::State::new(),
+            raw_button_state: button::State::new(),
+            display: DisplayType::Rendered,
+        }
+    }
+
+    pub fn update(&mut self, msg: Msg) -> Command<Msg> {
         match msg {
-            SessionLogMsg::SwitchDisplay(display) => {
+            Msg::SwitchDisplay(display) => {
                 self.display = display;
                 Command::none()
             }
         }
     }
 
-    fn view(&mut self) -> Element<'_, SessionLogMsg> {
+    pub fn view(&mut self) -> Element<'_, Msg> {
         let fmt = match self.response.options.get::<ContentFormat>() {
             Some(ref fmt) if fmt.len() == 1 => Some(fmt[0]),
             Some(_) => {
@@ -174,8 +156,8 @@ impl GoodResponse {
             })
             .push(Row::new()
                 .push(Text::new("display:"))
-                .push(Button::new(&mut self.rendered_button_state, Text::new("rendered").color(if self.display == DisplayType::Rendered { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(SessionLogMsg::SwitchDisplay(DisplayType::Rendered)))
-                .push(Button::new(&mut self.raw_button_state, Text::new("raw").color(if self.display == DisplayType::Raw { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(SessionLogMsg::SwitchDisplay(DisplayType::Raw))))
+                .push(Button::new(&mut self.rendered_button_state, Text::new("rendered").color(if self.display == DisplayType::Rendered { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(Msg::SwitchDisplay(DisplayType::Rendered)))
+                .push(Button::new(&mut self.raw_button_state, Text::new("raw").color(if self.display == DisplayType::Raw { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(Msg::SwitchDisplay(DisplayType::Raw))))
             .push(match self.display {
                 DisplayType::Rendered => render_payload(fmt, &self.response.payload),
                 DisplayType::Raw => Text::new(format!("{:#?}", self.response)).font(MONOSPACE.clone()).into(),
@@ -184,47 +166,3 @@ impl GoodResponse {
     }
 }
 
-impl BadResponse {
-    fn view(&mut self) -> Element<'_, !> {
-        Column::new()
-            .push(Text::new(format!("Error requesting {}", self.request)))
-            .push(Text::new(format!("{:#?}", self.error)))
-            .into()
-    }
-}
-
-impl SessionLog {
-    pub fn response(request: String, response: Result<Arc<CoapMessage>, Arc<CoapError>>) -> Self {
-        match response {
-            Ok(response) => SessionLog::GoodResponse(GoodResponse {
-                request,
-                response,
-                rendered_button_state: button::State::new(),
-                raw_button_state: button::State::new(),
-                display: DisplayType::Rendered,
-            }),
-            Err(error) => SessionLog::BadResponse(BadResponse {
-                request,
-                error,
-            }),
-        }
-    }
-
-    pub fn update(&mut self, msg: SessionLogMsg) -> Command<SessionLogMsg> {
-        match self {
-            SessionLog::Request { .. } | SessionLog::BadResponse(_) => unreachable!(),
-            SessionLog::GoodResponse(response) => response.update(msg),
-        }
-    }
-
-    pub fn view(&mut self) -> Element<'_, SessionLogMsg> {
-        match self {
-            SessionLog::Request { url }
-                => Text::new(format!("Request to {}", url)).into(),
-            SessionLog::GoodResponse(response)
-                => response.view(),
-            SessionLog::BadResponse(response)
-                => response.view().map(|m| match m{}),
-        }
-    }
-}

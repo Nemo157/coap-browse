@@ -7,7 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 use iced::{Column, Row, Command, Element, widget::{text_input, scrollable}, TextInput, Scrollable};
 use futures::compat::Future01CompatExt;
 
-use crate::log::{SessionLog, SessionLogMsg};
+use super::log::{self, SessionLog};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionTag {
@@ -24,7 +24,7 @@ pub enum StateMessage {
     },
     LogMsg {
         index: usize,
-        msg: SessionLogMsg,
+        msg: log::Msg,
     },
 }
 

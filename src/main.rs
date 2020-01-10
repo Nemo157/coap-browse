@@ -5,16 +5,15 @@
 
 use iced::{Application, Command, Element, Settings};
 
-mod client;
-mod log;
+mod ui;
 
 #[derive(Default)]
 struct CoapBrowse {
-    client: client::State,
+    client: ui::client::State,
 }
 
 impl Application for CoapBrowse {
-    type Message = client::StateMessage;
+    type Message = ui::client::StateMessage;
 
     fn new() -> (Self, Command<Self::Message>) {
         (Self::default(), Command::none())
