@@ -4,7 +4,7 @@ use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::message::option::ContentFormat;
 use tokio_coap::message::option::Option as O;
 
-use iced::{Element, Text, Column, Button, widget::button, Row, Command};
+use iced::{Element, Text, Column, Button, widget::button, Row, Command, Background};
 
 use serde_json;
 use serde_cbor;
@@ -155,9 +155,10 @@ impl Response {
                 })
             })
             .push(Row::new()
-                .push(Text::new("display:"))
-                .push(Button::new(&mut self.rendered_button_state, Text::new("rendered").color(if self.display == DisplayType::Rendered { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(Msg::SwitchDisplay(DisplayType::Rendered)))
-                .push(Button::new(&mut self.raw_button_state, Text::new("raw").color(if self.display == DisplayType::Raw { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).on_press(Msg::SwitchDisplay(DisplayType::Raw))))
+                .push(Text::new("Body"))
+                .push(Button::new(&mut self.rendered_button_state, Text::new("rendered").color(if self.display == DisplayType::Rendered { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).background(Background::Color([0.9, 0.9, 0.9].into())).on_press(Msg::SwitchDisplay(DisplayType::Rendered)))
+                .push(Button::new(&mut self.raw_button_state, Text::new("raw").color(if self.display == DisplayType::Raw { [0.0, 1.0, 0.0] } else { [0.0, 0.0, 0.0] })).background(Background::Color([0.6, 0.6, 0.6].into())).on_press(Msg::SwitchDisplay(DisplayType::Raw))))
+                .push(Text::new(""))
             .push(match self.display {
                 DisplayType::Rendered => render_payload(fmt, &self.response.payload),
                 DisplayType::Raw => Text::new(format!("{:#?}", self.response)).font(MONOSPACE.clone()).into(),
