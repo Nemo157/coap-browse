@@ -33,7 +33,6 @@ pub struct State {
     session_log: Vec<SessionLog>,
     url: String,
     url_state: text_input::State,
-    rt: tokio_compat::runtime::Runtime,
     scrollable_state: scrollable::State,
 }
 
@@ -43,7 +42,6 @@ impl Default for State {
             session_log: Vec::new(),
             url: "".to_owned(),
             url_state: text_input::State::new(),
-            rt: tokio_compat::runtime::Runtime::new().unwrap(),
             scrollable_state: scrollable::State::new(),
         }
     }
@@ -58,16 +56,14 @@ impl State {
             }
             StateMessage::SubmitUrl => {
                 self.session_log.push(SessionLog::Request { url: self.url.clone() });
-                Command::perform({
-                    let url = self.url.clone();
-                    self.rt.spawn_handle_std(async move {
+                let url = self.url.clone();
+                async move {
+                    let response = try {
                         let client = Client::get(&url)?;
-                        Ok(Arc::new(client.send().compat().await?))
-                    })
-                }, {
-                    let url = self.url.clone();
-                    move |response| StateMessage::Response { request: url.clone(), response: response.unwrap() }
-                })
+                        Arc::new(client.send().compat().await?)
+                    };
+                    StateMessage::Response { request: url, response }
+                }.into()
             }
             StateMessage::Response { request, response } => {
                 self.session_log.push(SessionLog::response(request, response));

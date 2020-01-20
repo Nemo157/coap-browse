@@ -1,11 +1,12 @@
 #![feature(never_type)]
-#![feature(slice_patterns)]
+#![feature(try_blocks)]
 
 #![warn(rust_2018_idioms)]
 
 use iced::{Application, Command, Element, Settings};
 
 mod ui;
+mod executor;
 
 #[derive(Default)]
 struct CoapBrowse {
@@ -14,6 +15,7 @@ struct CoapBrowse {
 
 impl Application for CoapBrowse {
     type Message = ui::client::StateMessage;
+    type Executor = executor::TokioCompat;
 
     fn new() -> (Self, Command<Self::Message>) {
         (Self::default(), Command::none())
