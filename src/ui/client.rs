@@ -80,7 +80,7 @@ impl State {
         Column::new()
                 .push(Row::new().push(TextInput::new(&mut self.url_state, "coap url", &self.url, StateMessage::UrlChange).on_submit(StateMessage::SubmitUrl)))
                 .push({
-                    let mut logs = Scrollable::new(&mut self.scrollable_state);
+                    let mut logs = Scrollable::new(&mut self.scrollable_state).spacing(2).padding(2);
                     for (index, log) in self.session_log.iter_mut().enumerate().rev() {
                         logs = logs.push(log.view().map(move |msg| StateMessage::LogMsg { index, msg }));
                     }

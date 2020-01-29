@@ -4,7 +4,7 @@ use tokio_coap::message::Message as CoapMessage;
 use tokio_coap::message::option::ContentFormat;
 use tokio_coap::message::option::Option as O;
 
-use iced::{Element, Text, Column, Button, widget::button, Row, Command};
+use iced::{Color, Element, Text, Column, Button, widget::button, Row, Command};
 
 use serde_json;
 use serde_cbor;
@@ -146,7 +146,7 @@ impl Response {
         };
 
         Column::new()
-            .push(Text::new(format!("Response for {}", self.request)))
+            .push(Text::new(format!("Response for {}", self.request)).color(Color::from_rgb8(0x85, 0x99, 0x00)))
             .push({
                 Text::new(match (&fmt, fmt_name) {
                     (_, Some(fmt)) => format!("content format: {}", fmt),
